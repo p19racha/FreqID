@@ -11,3 +11,6 @@ build/
 .venv/
 data/
 research/outputs/
+.coverage
+.pytest_cache/
+*.egg-info/

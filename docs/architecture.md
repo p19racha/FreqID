@@ -83,9 +83,9 @@ FreqID enforces strict data minimization. The table below delineates what data i
 
 ## 5. Development Roadmap: 10-Phase Plan
 
-1. **Phase 0: Fork Setup, Code Mapping & Repository Structure**
-2. **Phase 1: PartialFace Training & Baseline Reproduction**
-3. **Phase 2: freqid-core Inference Engine**
+1. **Phase 0: Fork Setup, Code Mapping & Repository Structure** [DONE]
+2. **Phase 1: PartialFace Training & Baseline Reproduction** [DONE]
+3. **Phase 2: freqid-core Inference Engine & Packaging** [DONE]
 4. **Phase 3: Edge Client SDK (Alignment, DCT & Sampling)**
 5. **Phase 4: Backend Device Management & Enrollment API**
 6. **Phase 5: Backend Biometric Verification & Identification Service**
@@ -93,3 +93,46 @@ FreqID enforces strict data minimization. The table below delineates what data i
 8. **Phase 7: Administrator Web UI (shadcn/ui & Next.js)**
 9. **Phase 8: Cryptographic Hardening & Template Protection**
 10. **Phase 9: Production Deployment (Docker Compose & Edge Packaging)**
+
+---
+
+## 6. `freqid-core` Module Architecture & Privacy Boundaries
+
+Implemented in Phase 2 at [`core/`](file:///home/racha/FreqID/core/):
+
+```
+core/
+├── pyproject.toml                     # Standalone package with base, [torch], [onnx], [dev] extras
+├── src/freqid_core/
+│   ├── transform.py                   # CLIENT-SIDE ONLY: Aligned face -> BDCT -> Pruning -> Subset
+│   ├── payload.py                     # Versioned binary wire format (Pure NumPy + struct)
+│   ├── model.py                       # Inference-only IR_18 backbone (zero training code)
+│   ├── embedder.py                    # Inference engine (PyTorch & ONNX Runtime backends)
+│   ├── matching.py                    # Biometric cosine matching, 1:1 verify, 1:N search
+│   ├── export_onnx.py                 # ONNX opset 14 exporter and parity validator
+│   ├── config.py                      # Frozen dataclasses for transform and model invariants
+│   └── errors.py                      # Typed exception hierarchy
+├── tests/                             # 27 unit tests (81% test coverage)
+├── scripts/                           # Parity verification, inference benchmarks, ONNX export
+└── examples/                          # 15-line enrollment and verification demo
+```
+
+### Module Isolation Boundary
+- **Client SDK (Phase 3)**: Imports `transform.py` and `payload.py`. Discards raw image from memory immediately upon generating `PartialFacePayload`.
+- **Backend Service (Phases 4-6)**: Imports `embedder.py`, `matching.py`, and `payload.py`. **Strictly forbidden** from importing `transform.py` or image decoding packages (`cv2`, `PIL`).
+
+---
+
+## 7. `PartialFacePayload` Binary Wire Format Specification
+
+To transfer protected partial frequency representations securely with zero overhead:
+
+- **Magic Bytes**: `b"FQID"` (4 bytes)
+- **Version**: `uint16` (`1`)
+- **Flags**: `uint16` (`0 = uncompressed`, `1 = zlib compressed`)
+- **Dimensions**: Batch `uint32`, Channels `uint16` (27), Height `uint16` (112), Width `uint16` (112)
+- **Dtype Code**: `uint8` (`0 = float32`, `1 = float16`)
+- **Metadata**: Subset index (`int8`), Permutation index (`int8`), 3 reserved padding bytes
+- **Data Block**: $B \times 27 \times 112 \times 112 \times \text{itemsize}$ contiguous float buffer
+- **Checksum**: CRC32 (4 bytes trailing)
+- **Wire Size**: $1.29\text{ MB}$ uncompressed ($1,354,780$ bytes) / $\approx 350 - 450\text{ KB}$ compressed.
