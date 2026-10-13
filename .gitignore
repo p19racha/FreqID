@@ -8,3 +8,6 @@ logs/
 rpf.yaml
 *.bak
 build/
+.venv/
+data/
+research/outputs/

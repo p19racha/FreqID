@@ -24,7 +24,7 @@ import argparse
 import torch
 import torch.nn as nn
 
-REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, os.path.join(REPO_ROOT, 'recognition'))
 
 from torchkit.backbone import get_model
@@ -67,7 +67,7 @@ def measure_latency(model, device, batch_size, input_shape=(27, 112, 112), num_r
     return avg_per_image_ms, avg_batch_time_ms, fps
 
 
-def run_benchmark(ckpt_path=None, output_log='freqid/research/outputs/eval/performance_benchmark.log'):
+def run_benchmark(ckpt_path=None, output_log='research/outputs/eval/performance_benchmark.log'):
     os.makedirs(os.path.dirname(output_log), exist_ok=True)
     print("=== PartialFace IR_18 Hardware & Inference Performance Benchmark ===")
 
@@ -159,6 +159,6 @@ def run_benchmark(ckpt_path=None, output_log='freqid/research/outputs/eval/perfo
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--ckpt_path', default=None)
-    parser.add_argument('--log_file', default='freqid/research/outputs/eval/performance_benchmark.log')
+    parser.add_argument('--log_file', default='research/outputs/eval/performance_benchmark.log')
     args = parser.parse_args()
     run_benchmark(args.ckpt_path, args.log_file)

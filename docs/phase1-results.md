@@ -8,8 +8,8 @@ This document compiles the quantitative evaluation, performance benchmarks, sani
 
 | Benchmark | My Result | Paper Result (ICCV 2023) | Difference | Weights Used | Log File |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **LFW (Verification)** | **99.50%** (acc) | 98.83% (acc) | +0.67% | Self-trained (`partialface_ir_18_epoch5.pth`) | [`freqid/research/outputs/eval/lfw_eval_epoch5.log`](file:///home/racha/FreqID/freqid/research/outputs/eval/lfw_eval_epoch5.log) |
-| **LFW (Untrained Baseline)** | **97.50%** (acc) | N/A | N/A | Random initialization | [`freqid/research/outputs/eval/lfw_eval_untrained_baseline.log`](file:///home/racha/FreqID/freqid/research/outputs/eval/lfw_eval_untrained_baseline.log) |
+| **LFW (Verification)** | **99.50%** (acc) | 98.83% (acc) | +0.67% | Self-trained (`partialface_ir_18_epoch5.pth`) | [`research/outputs/eval/lfw_eval_epoch5.log`](file:///home/racha/FreqID/research/outputs/eval/lfw_eval_epoch5.log) |
+| **LFW (Untrained Baseline)** | **97.50%** (acc) | N/A | N/A | Random initialization | [`research/outputs/eval/lfw_eval_untrained_baseline.log`](file:///home/racha/FreqID/research/outputs/eval/lfw_eval_untrained_baseline.log) |
 | **CFP-FP (Pose)** | *Deferred to Phase 2* | 91.53% (acc) | — | None (Pretrained weights not provided) | *N/A (Upstream missing weights)* |
 | **AgeDB-30 (Age)** | *Deferred to Phase 2* | 92.48% (acc) | — | None (Pretrained weights not provided) | *N/A (Upstream missing weights)* |
 
@@ -47,7 +47,7 @@ Measured on the host hardware (Intel 24-core CPU, NVIDIA GeForce RTX 4070 Laptop
 | **GPU Latency (Batch Size 1)** | **`2.42`** | ms / image (**413.6 FPS**) on RTX 4070 |
 | **GPU Latency (Batch Size 32)** | **`0.82`** | ms / image (**1,220.4 FPS**, 26.2 ms / batch) on RTX 4070 |
 
-*Raw benchmark log recorded at: [`freqid/research/outputs/eval/performance_benchmark.log`](file:///home/racha/FreqID/freqid/research/outputs/eval/performance_benchmark.log)*
+*Raw benchmark log recorded at: [`research/outputs/eval/performance_benchmark.log`](file:///home/racha/FreqID/research/outputs/eval/performance_benchmark.log)*
 
 ---
 
@@ -56,14 +56,14 @@ Measured on the host hardware (Intel 24-core CPU, NVIDIA GeForce RTX 4070 Laptop
 The visual privacy property of PartialFace was verified by extracting intermediate representations during the data loader pipeline:
 
 1. **Before (Raw Spatial RGB Image)**:
-   - File: [`freqid/research/outputs/sanity/face_spatial_before.png`](file:///home/racha/FreqID/freqid/research/outputs/sanity/face_spatial_before.png)
+   - File: [`research/outputs/sanity/face_spatial_before.png`](file:///home/racha/FreqID/research/outputs/sanity/face_spatial_before.png)
    - Dimensions: $112 \times 112 \times 3$
    - Description: Recognizable facial structure with skin tone, oval contour, eye landmarks, and mouth.
 2. **After (Reconstruction after Pruning 10 Low-Frequency Channels)**:
-   - File: [`freqid/research/outputs/sanity/face_reconstructed_after_pruning.png`](file:///home/racha/FreqID/freqid/research/outputs/sanity/face_reconstructed_after_pruning.png)
+   - File: [`research/outputs/sanity/face_reconstructed_after_pruning.png`](file:///home/racha/FreqID/research/outputs/sanity/face_reconstructed_after_pruning.png)
    - Description: Visual appearance is completely obliterated. No human observer can identify the person or perceive skin tone, gender, or appearance.
 3. **Partial Frequency Input Slices Montage**:
-   - File: [`freqid/research/outputs/sanity/face_frequency_channels_montage.png`](file:///home/racha/FreqID/freqid/research/outputs/sanity/face_frequency_channels_montage.png)
+   - File: [`research/outputs/sanity/face_frequency_channels_montage.png`](file:///home/racha/FreqID/research/outputs/sanity/face_frequency_channels_montage.png)
    - Dimensions: $342 \times 1026$ (montage of 27 high-frequency channel slices)
    - Description: High-frequency checkerboard / stripe patterns sent to the backbone input layer.
 
@@ -82,7 +82,7 @@ The visual privacy property of PartialFace was verified by extracting intermedia
 
 | Upstream Issue | Root Cause | Workaround Implemented |
 | :--- | :--- | :--- |
-| **No Pretrained PartialFace Weights** | Upstream only released standard RGB baseline weights; no PartialFace `.pth` was distributed. | Built self-contained training script [`train_partialface.py`](file:///home/racha/FreqID/freqid/research/train_partialface.py) to train our own verified checkpoint. |
+| **No Pretrained PartialFace Weights** | Upstream only released standard RGB baseline weights; no PartialFace `.pth` was distributed. | Built self-contained training script [`train_partialface.py`](file:///home/racha/FreqID/research/train_partialface.py) to train our own verified checkpoint. |
 | **Unmaintained `dareblopy` Dependency** | `dareblopy` only provides wheels for Python <=3.8 (released 2020), failing on Python 3.12. | Created shim `dareblopy.py` in `.venv`; verified that standard image folder mode (`ImgSampleParser`) does not require TFRecord libraries. |
 | **Protobuf v3 Descriptor Incompatibility** | Pre-generated `example_pb2.py` in TFace was compiled with protoc < 3.19, which crashes on protobuf >= 4. | Added `protobuf_env.pth` to set `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python`. |
-| **Evaluation Script Assumes 3-Channel Input** | Upstream `recognition/test/verification.py` passes 3-channel RGB tensors directly to backbone. | Created [`evaluate_partialface.py`](file:///home/racha/FreqID/freqid/research/evaluate_partialface.py) which applies `dct_transform` and subset sampling prior to backbone evaluation. |
+| **Evaluation Script Assumes 3-Channel Input** | Upstream `recognition/test/verification.py` passes 3-channel RGB tensors directly to backbone. | Created [`evaluate_partialface.py`](file:///home/racha/FreqID/research/evaluate_partialface.py) which applies `dct_transform` and subset sampling prior to backbone evaluation. |

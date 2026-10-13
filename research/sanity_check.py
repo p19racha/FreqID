@@ -21,14 +21,14 @@ import numpy as np
 import cv2
 
 # Add recognition directory to path
-REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, os.path.join(REPO_ROOT, 'recognition'))
 
 from tasks.partialface.utils import dct_transform, idct_transform, create_channel_subsets, form_training_batch
 from tasks.partialface.base_task import AugmentedMultiDataset
 
 
-def run_sanity_check(data_root='data/train_subset', output_dir='freqid/research/outputs/sanity'):
+def run_sanity_check(data_root='data/train_subset', output_dir='research/outputs/sanity'):
     os.makedirs(output_dir, exist_ok=True)
     print(f"=== Running PartialFace Data Pipeline Sanity Check ===")
 

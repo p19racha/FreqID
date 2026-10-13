@@ -22,7 +22,7 @@ import torch.nn.functional as F
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 
-REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, os.path.join(REPO_ROOT, 'recognition'))
 
 from tasks.partialface.utils import form_training_batch
@@ -247,8 +247,8 @@ def main():
     parser.add_argument('--device', default='cuda' if torch.cuda.is_available() else 'cpu')
     parser.add_argument('--seed', type=int, default=1337, help='Random seed')
     parser.add_argument('--print_freq', type=int, default=10, help='Log frequency')
-    parser.add_argument('--log_dir', default='freqid/research/outputs/train', help='Log directory')
-    parser.add_argument('--ckpt_dir', default='freqid/research/outputs/checkpoints', help='Checkpoint directory')
+    parser.add_argument('--log_dir', default='research/outputs/train', help='Log directory')
+    parser.add_argument('--ckpt_dir', default='research/outputs/checkpoints', help='Checkpoint directory')
     args = parser.parse_args()
 
     train(args)

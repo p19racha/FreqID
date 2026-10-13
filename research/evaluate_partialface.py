@@ -25,7 +25,7 @@ import torch.nn as nn
 from sklearn.model_selection import KFold
 import cv2
 
-REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, os.path.join(REPO_ROOT, 'recognition'))
 
 from tasks.partialface.utils import dct_transform, create_channel_subsets
@@ -129,7 +129,7 @@ def main():
     parser.add_argument('--ckpt_path', default=None, help='Path to checkpoint file (.pth)')
     parser.add_argument('--backbone', default='IR_18', help='Backbone architecture')
     parser.add_argument('--device', default='cuda' if torch.cuda.is_available() else 'cpu')
-    parser.add_argument('--log_file', default='freqid/research/outputs/eval/lfw_eval.log')
+    parser.add_argument('--log_file', default='research/outputs/eval/lfw_eval.log')
     args = parser.parse_args()
 
     os.makedirs(os.path.dirname(args.log_file), exist_ok=True)

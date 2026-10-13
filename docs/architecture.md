@@ -10,7 +10,7 @@ FreqID mitigates these privacy vulnerabilities at the edge by converting capture
 
 ## 2. Upstream Codebase Integration Note
 
-The upstream Tencent/TFace codebase remains unmodified in its original location (`recognition/`). During **Phase 2**, the `freqid/core` inference engine will import or adapt the PartialFace neural network architectures and frequency conversion operators directly from `recognition/`, preserving upstream merge cleanliness and git tracking integrity.
+The upstream Tencent/TFace codebase resides at `recognition/`. During **Phase 2**, the `core/` inference engine will adapt the PartialFace neural network architectures and frequency conversion operators directly for root deployment.
 
 ---
 
