@@ -86,7 +86,7 @@ FreqID enforces strict data minimization. The table below delineates what data i
 1. **Phase 0: Fork Setup, Code Mapping & Repository Structure** [DONE]
 2. **Phase 1: PartialFace Training & Baseline Reproduction** [DONE]
 3. **Phase 2: freqid-core Inference Engine & Packaging** [DONE]
-4. **Phase 3: Edge Client SDK (Alignment, DCT & Sampling)**
+4. **Phase 3: Edge Client SDK (Alignment, DCT & Sampling)** [DONE]
 5. **Phase 4: Backend Device Management & Enrollment API**
 6. **Phase 5: Backend Biometric Verification & Identification Service**
 7. **Phase 6: Persistence, Database & Vector Indexing**
@@ -135,4 +135,34 @@ To transfer protected partial frequency representations securely with zero overh
 - **Metadata**: Subset index (`int8`), Permutation index (`int8`), 3 reserved padding bytes
 - **Data Block**: $B \times 27 \times 112 \times 112 \times \text{itemsize}$ contiguous float buffer
 - **Checksum**: CRC32 (4 bytes trailing)
-- **Wire Size**: $1.29\text{ MB}$ uncompressed ($1,354,780$ bytes) / $\approx 350 - 450\text{ KB}$ compressed.
+- **Wire Size**: $1.28\text{ MB}$ uncompressed ($1,282,344$ bytes) / $\approx 350 - 450\text{ KB}$ compressed.
+
+---
+
+## 8. `freqid-client` Edge Client SDK Architecture
+
+Implemented in Phase 3 at [`client-sdk/`](file:///home/racha/FreqID/client-sdk/):
+
+```
+client-sdk/
+├── pyproject.toml                     # Lightweight package (NumPy, OpenCV-headless, httpx, pyyaml)
+├── src/freqid_client/
+│   ├── camera.py                      # WebcamSource, ImageFolderSource, SingleImageSource
+│   ├── detect.py                      # FaceDetector ABC & YuNetFaceDetector (232 KB ONNX, CPU)
+│   ├── align.py                       # 5-point Umeyama similarity transform to 112x112 canonical template
+│   ├── quality.py                     # QualityGate (Laplacian variance, luminance, size, pose)
+│   ├── auth.py                        # Pluggable Authenticator ABC, StaticTokenAuth, 0600 storage
+│   ├── transport.py                   # FreqIDTransport over HTTPS, TLS 1.3, nonces, retry/backoff
+│   ├── pipeline.py                    # In-memory orchestrator with immediate spatial buffer clearing
+│   ├── enroll.py                      # Guided multi-capture EnrollmentCoordinator
+│   ├── cli.py                         # CLI tool (check, capture, verify, enroll)
+│   ├── errors.py                      # Typed exception hierarchy
+│   ├── mock_server/app.py             # FastAPI test double for Phase 4 draft API contract
+│   └── models/
+│       └── face_detection_yunet_2023mar.onnx (232 KB Apache-2.0 face detector)
+└── tests/                             # 27 unit and integration tests (100% pass)
+```
+
+### Privacy Guarantee Invariant
+Raw spatial video frames and aligned crops exist **strictly in transient volatile RAM**. Once `image_to_partial_frequency(..., engine="numpy")` produces the 27-channel partial frequency array, spatial buffers are zero-filled and freed. Zero image files or raw pixel arrays are ever written to disk or transmitted across the wire.
+

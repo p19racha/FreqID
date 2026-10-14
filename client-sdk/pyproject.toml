@@ -1,0 +1,60 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "freqid-client"
+version = "0.1.0"
+description = "Privacy-preserving edge client SDK for FreqID face recognition"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "Apache-2.0"}
+authors = [
+    {name = "FreqID Team"}
+]
+keywords = ["face-recognition", "privacy", "client-sdk", "biometrics", "edge"]
+dependencies = [
+    "freqid-core>=0.1.0",
+    "numpy>=1.24.0",
+    "pyyaml>=6.0",
+    "httpx>=0.25.0"
+]
+
+[project.optional-dependencies]
+camera = [
+    "opencv-python-headless>=4.8.0"
+]
+detect = [
+    "opencv-python-headless>=4.8.0"
+]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.1.0",
+    "mypy>=1.6.0",
+    "fastapi>=0.100.0",
+    "uvicorn>=0.22.0"
+]
+all = [
+    "freqid-client[camera,detect,dev]"
+]
+
+[project.scripts]
+freqid-client = "freqid_client.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+freqid_client = ["py.typed", "models/*.onnx"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = false
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
