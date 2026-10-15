@@ -1,0 +1,60 @@
+# Git and CI
+.git/
+.github/
+.gitignore
+
+# Virtual environments & Python cache
+.venv/
+env/
+venv/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Node & Frontend
+**/node_modules/
+**/dist/
+**/test-results/
+**/playwright-report/
+*.tsbuildinfo
+pnpm-debug.log*
+
+# Models, Weights & Checkpoints (Forbidden in image per Step 2)
+*.pt
+*.pth
+*.onnx
+*.ckpt
+*.safetensors
+*.bin
+*.npy
+*.npz
+data/
+research/outputs/
+
+# Secrets, keys, and dumps
+secrets/
+deploy/secrets/
+deploy/tls/certs/*.key
+deploy/tls/certs/*.crt
+*.pem
+*.key
+*.p12
+*.shares
+*.mnemonic
+.env
+*.env
+*.dump
+*.sql
+*.sqlite
+
+# Documentation & Eval artifacts
+docs/
+security-eval/
+*.md
+freqid
