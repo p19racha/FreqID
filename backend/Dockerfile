@@ -37,9 +37,9 @@ LABEL org.opencontainers.image.title="freqid-server" \
 
 WORKDIR /app
 
-# Create non-root system user with explicit UID/GID 10001 and no login shell
-RUN groupadd -g 10001 freqid && \
-    useradd -u 10001 -g freqid -d /app -s /sbin/nologin -M freqid
+# Create non-root system user with UID/GID 1000 and no login shell
+RUN groupadd -g 1000 freqid && \
+    useradd -u 1000 -g freqid -d /app -s /sbin/nologin -M freqid
 
 # Install wheels from builder
 COPY --from=builder /build/wheels /app/wheels
@@ -67,7 +67,7 @@ ENV PYTHONUNBUFFERED="1" \
     FREQID_SERVER_DEVICE="cpu" \
     FREQID_SERVER_MODEL_PATH="/app/models/partialface_ir_18.onnx"
 
-USER 10001:10001
+USER freqid:freqid
 
 EXPOSE 8000
 

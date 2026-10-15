@@ -74,6 +74,7 @@ research/outputs/
 .env
 *.env
 !.env.example
+!deploy/.env.example
 *.pem
 *.key
 *.p12
@@ -82,6 +83,17 @@ research/outputs/
 *.mnemonic
 id_rsa*
 id_ed25519*
+deploy/secrets/*
+!deploy/secrets/*.example
+!deploy/secrets/README.md
+!deploy/secrets/.gitkeep
+deploy/tls/certs/*
+!deploy/tls/certs/*.example
+!deploy/tls/certs/README.md
+!deploy/tls/certs/.gitkeep
+deploy/models/*
+!deploy/models/README.md
+!deploy/models/.gitkeep
 
 # Database Dumps & Backups
 *.sql

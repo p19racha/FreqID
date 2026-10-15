@@ -1,0 +1,23 @@
+# Copyright 2026 FreqID Authors. Apache-2.0 License.
+# Development Docker Compose Override for FreqID
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  # In development, expose ports directly for local debugging and testing
+  server:
+    ports:
+      - "8000:8000"
+    environment:
+      FREQID_SERVER_ENVIRONMENT: development
+      FREQID_SERVER_MASK_SCORES_IN_PRODUCTION: "false"
+      FREQID_SERVER_ALLOW_STATIC_TOKENS_IN_PRODUCTION: "true"
+
+  admin-ui:
+    ports:
+      - "8080:8080"
+
+  postgres:
+    ports:
+      - "54322:5432"
+
+  # Proxy remains available on ports 80/443 if full ingress testing is desired
