@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FreqID Admin</title>
+    <!-- Strict CSP header configured on production reverse proxy; local meta fallback -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' http://127.0.0.1:8000; font-src 'self'; object-src 'none';" />
+  </head>
+  <body class="min-h-screen bg-background font-sans antialiased">
+    <div id="root"></div>
+    <script src="/config.js"></script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
