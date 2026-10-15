@@ -6,6 +6,7 @@ routes_health.py: Health check, readiness probe, and model metadata endpoints.
 from __future__ import annotations
 
 from fastapi import APIRouter, Request, status
+from fastapi.responses import PlainTextResponse
 from sqlalchemy import func, select
 
 from freqid_server.api.schemas import (
@@ -70,6 +71,37 @@ async def readyz_endpoint(request: Request) -> ReadyResponse:
         store_connected=store_connected,
         enrolled_identities=gallery.count,
     )
+
+
+@router.get(
+    "/metrics",
+    response_class=PlainTextResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Prometheus Metrics",
+    operation_id="get_metrics",
+)
+async def metrics_endpoint(request: Request) -> PlainTextResponse:
+    """Exposes Prometheus format system operational metrics."""
+    config, inference, gallery, store = get_dependencies(request)
+    store_ok = 1 if await store.ping() else 0
+    model_ok = 1 if inference.is_ready else 0
+    gallery_count = gallery.count
+
+    lines = [
+        "# HELP freqid_up Administrative service liveness state",
+        "# TYPE freqid_up gauge",
+        "freqid_up 1",
+        "# HELP freqid_store_connected PostgreSQL template store connection state",
+        "# TYPE freqid_store_connected gauge",
+        f"freqid_store_connected {store_ok}",
+        "# HELP freqid_model_loaded Neural network embedder readiness state",
+        "# TYPE freqid_model_loaded gauge",
+        f"freqid_model_loaded {model_ok}",
+        "# HELP freqid_enrolled_identities Total active identities loaded in RAM gallery",
+        "# TYPE freqid_enrolled_identities gauge",
+        f"freqid_enrolled_identities {gallery_count}",
+    ]
+    return PlainTextResponse("\n".join(lines) + "\n", media_type="text/plain; version=0.0.4; charset=utf-8")
 
 
 @router.get(

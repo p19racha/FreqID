@@ -51,6 +51,7 @@
         path /v1/*
         path /healthz
         path /readyz
+        path /metrics
         path /docs*
         path /redoc*
         path /openapi.json
