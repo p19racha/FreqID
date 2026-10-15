@@ -98,10 +98,14 @@ deploy/models/*
 # Database Dumps & Backups
 *.sql
 *.dump
+*.dump.enc*
 *.db
 *.sqlite
 *.sqlite3
 *.bak
+deploy/backups/*
+!deploy/backups/README.md
+!deploy/backups/.gitkeep
 
 # Logs & Temporary Files
 *.log
