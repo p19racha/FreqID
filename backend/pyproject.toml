@@ -1,0 +1,72 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "freqid-server"
+version = "0.1.0"
+description = "Privacy-preserving face recognition inference and matching server for FreqID"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "Apache-2.0"}
+authors = [
+    {name = "FreqID Team"}
+]
+keywords = ["face-recognition", "privacy", "server", "biometrics", "fastapi"]
+dependencies = [
+    "freqid-core>=0.1.0",
+    "fastapi>=0.100.0",
+    "uvicorn>=0.22.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "pyyaml>=6.0",
+    "numpy>=1.24.0",
+    "sqlalchemy>=2.0.0",
+    "asyncpg>=0.29.0",
+    "greenlet>=3.0.0",
+    "alembic>=1.13.0",
+    "cryptography>=42.0.0",
+    "argon2-cffi>=23.1.0",
+    "pyjwt>=2.8.0",
+    "shamir-mnemonic>=0.3.0"
+]
+
+[project.optional-dependencies]
+torch = [
+    "freqid-core[torch]"
+]
+onnx = [
+    "freqid-core[onnx]"
+]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "httpx>=0.25.0",
+    "ruff>=0.1.0",
+    "mypy>=1.6.0"
+]
+all = [
+    "freqid-server[onnx,dev]"
+]
+
+[project.scripts]
+freqid-server = "freqid_server.main:run_server"
+freqid-admin = "freqid_server.admin_cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+freqid_server = ["py.typed"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = false
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true

@@ -1,0 +1,3315 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "FreqID Server",
+    "description": "Privacy-preserving face recognition server. Receives only partial-frequency representations (27-channel DCT) over TLS; raw spatial images are strictly prohibited.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/healthz": {
+      "get": {
+        "tags": [
+          "Health and System"
+        ],
+        "summary": "Liveness Probe",
+        "description": "Returns 200 OK if the HTTP process is running.",
+        "operationId": "healthz",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/readyz": {
+      "get": {
+        "tags": [
+          "Health and System"
+        ],
+        "summary": "Readiness Probe",
+        "description": "Returns readiness status including embedder availability and gallery cache count.",
+        "operationId": "readyz",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadyResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/model": {
+      "get": {
+        "tags": [
+          "Health and System"
+        ],
+        "summary": "Model Metadata",
+        "description": "Returns non-sensitive metadata for active server-side neural model.",
+        "operationId": "get_model_info",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelInfoResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/model/migration-report": {
+      "get": {
+        "tags": [
+          "Health and System"
+        ],
+        "summary": "Model Version Migration Report",
+        "description": "Reports compatibility and re-enrollment requirements across model versions.",
+        "operationId": "get_model_migration_report",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelMigrationReportResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/verify": {
+      "post": {
+        "tags": [
+          "Biometric Verification"
+        ],
+        "summary": "1:1 Biometric Verification",
+        "operationId": "biometric_verify",
+        "parameters": [
+          {
+            "name": "X-Device-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Device-Id"
+            }
+          },
+          {
+            "name": "X-Claimed-Identity",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Claimed-Identity"
+            }
+          },
+          {
+            "name": "X-Nonce",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Nonce"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/identify": {
+      "post": {
+        "tags": [
+          "Biometric Identification"
+        ],
+        "summary": "1:N Biometric Identification",
+        "operationId": "biometric_identify",
+        "parameters": [
+          {
+            "name": "X-Device-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Device-Id"
+            }
+          },
+          {
+            "name": "X-Nonce",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Nonce"
+            }
+          },
+          {
+            "name": "X-Top-K",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": 5,
+              "title": "X-Top-K"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdentifyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/enroll": {
+      "post": {
+        "tags": [
+          "Enrollment and Lifecycle"
+        ],
+        "summary": "Multi-sample Biometric Enrollment",
+        "operationId": "enroll_frames",
+        "parameters": [
+          {
+            "name": "X-Device-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Device-Id"
+            }
+          },
+          {
+            "name": "X-User-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-User-Id"
+            }
+          },
+          {
+            "name": "X-Re-Enroll",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": false,
+              "title": "X-Re-Enroll"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnrollResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/users/{user_id}/disable": {
+      "post": {
+        "tags": [
+          "Enrollment and Lifecycle"
+        ],
+        "summary": "Disable User",
+        "operationId": "disable_user",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserStatusResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/users/{user_id}/enable": {
+      "post": {
+        "tags": [
+          "Enrollment and Lifecycle"
+        ],
+        "summary": "Enable User",
+        "operationId": "enable_user",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserStatusResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/users/{user_id}/export": {
+      "get": {
+        "tags": [
+          "Enrollment and Lifecycle"
+        ],
+        "summary": "Export User Stored Data (Metadata Only)",
+        "operationId": "export_user",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserExportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/users/{user_id}": {
+      "delete": {
+        "tags": [
+          "Enrollment and Lifecycle"
+        ],
+        "summary": "Delete User Template (Right-to-be-Forgotten)",
+        "operationId": "delete_user",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/devices/pair": {
+      "post": {
+        "tags": [
+          "Devices"
+        ],
+        "summary": "Pair Device",
+        "description": "Claims a pairing token and registers a new edge camera device.",
+        "operationId": "device_pair",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DevicePairRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DevicePairResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/devices/heartbeat": {
+      "post": {
+        "tags": [
+          "Devices"
+        ],
+        "summary": "Device Heartbeat",
+        "description": "Heartbeat endpoint recording device telemetry and returning server time/config.",
+        "operationId": "device_heartbeat",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceHeartbeatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceHeartbeatResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/devices/rotate-key": {
+      "post": {
+        "tags": [
+          "Devices"
+        ],
+        "summary": "Device Rotate Key",
+        "description": "Rotates device public key signed using current active credentials.",
+        "operationId": "device_rotate_key",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceRotateKeyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceRotateKeyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/auth/login": {
+      "post": {
+        "tags": [
+          "Admin Auth"
+        ],
+        "summary": "Login",
+        "description": "Authenticates administrator and issues JWT access token + rotating refresh cookie.",
+        "operationId": "admin_login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object",
+                "title": "Req Body"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Admin Login"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/auth/refresh": {
+      "post": {
+        "tags": [
+          "Admin Auth"
+        ],
+        "summary": "Refresh Session",
+        "description": "Rotates refresh token and issues a new access token; revokes family if reuse detected.",
+        "operationId": "admin_refresh",
+        "parameters": [
+          {
+            "name": "freqid_refresh_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Freqid Refresh Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Admin Refresh"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/auth/logout": {
+      "post": {
+        "tags": [
+          "Admin Auth"
+        ],
+        "summary": "Logout",
+        "description": "Invalidates current refresh token server-side and clears cookie.",
+        "operationId": "admin_logout",
+        "parameters": [
+          {
+            "name": "freqid_refresh_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Freqid Refresh Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Admin Logout"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/auth/logout-everywhere": {
+      "post": {
+        "tags": [
+          "Admin Auth"
+        ],
+        "summary": "Logout Everywhere",
+        "description": "Invalidates all sessions for current administrator across all devices.",
+        "operationId": "admin_logout_everywhere",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Admin Logout Everywhere"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/auth/me": {
+      "get": {
+        "tags": [
+          "Admin Auth"
+        ],
+        "summary": "Get Me",
+        "description": "Returns profile and active permissions of authenticated administrator.",
+        "operationId": "admin_get_me",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Admin Get Me"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/auth/change-password": {
+      "post": {
+        "tags": [
+          "Admin Auth"
+        ],
+        "summary": "Change Password",
+        "description": "Self-service password update requiring current password.",
+        "operationId": "admin_change_password",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object",
+                "title": "Req Body"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Admin Change Password"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/devices/pairing-tokens": {
+      "post": {
+        "tags": [
+          "Admin Devices"
+        ],
+        "summary": "Create Pairing Token",
+        "description": "Provisions a single-use 128-bit device pairing token with short expiry.",
+        "operationId": "admin_create_pairing_token",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PairingTokenCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PairingTokenCreateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/devices": {
+      "get": {
+        "tags": [
+          "Admin Devices"
+        ],
+        "summary": "List Devices",
+        "description": "Lists registered devices with operational status and telemetry.",
+        "operationId": "admin_list_devices",
+        "parameters": [
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "State"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeviceSummary"
+                  },
+                  "title": "Response Admin List Devices"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/devices/{device_id}": {
+      "get": {
+        "tags": [
+          "Admin Devices"
+        ],
+        "summary": "Get Device",
+        "description": "Retrieves full telemetry, audit trace, and recent heartbeats for a device.",
+        "operationId": "admin_get_device",
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Device Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Admin Devices"
+        ],
+        "summary": "Update Device",
+        "description": "Updates device metadata, location, or assigned permission scopes.",
+        "operationId": "admin_update_device",
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Device Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Admin Update Device"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin Devices"
+        ],
+        "summary": "Delete Revoked Device",
+        "description": "Purges a device record (permitted only if already revoked).",
+        "operationId": "admin_delete_device",
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Device Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Admin Delete Device"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/devices/{device_id}/approve": {
+      "post": {
+        "tags": [
+          "Admin Devices"
+        ],
+        "summary": "Approve Device",
+        "description": "Approves a pending device into the active operational state.",
+        "operationId": "admin_approve_device",
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Device Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Admin Approve Device"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/devices/{device_id}/suspend": {
+      "post": {
+        "tags": [
+          "Admin Devices"
+        ],
+        "summary": "Suspend Device",
+        "description": "Places an active device under temporary reversible administrative suspension.",
+        "operationId": "admin_suspend_device",
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Device Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/DeviceActionRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Admin Suspend Device"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/devices/{device_id}/resume": {
+      "post": {
+        "tags": [
+          "Admin Devices"
+        ],
+        "summary": "Resume Device",
+        "description": "Resumes a suspended device back to the active state.",
+        "operationId": "admin_resume_device",
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Device Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Admin Resume Device"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/devices/{device_id}/revoke": {
+      "post": {
+        "tags": [
+          "Admin Devices"
+        ],
+        "summary": "Revoke Device",
+        "description": "Permanently revokes a device (immediate kill). Revoked devices can never return to active.",
+        "operationId": "admin_revoke_device",
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Device Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/DeviceActionRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Admin Revoke Device"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/users": {
+      "get": {
+        "tags": [
+          "Admin Users"
+        ],
+        "summary": "List Users",
+        "description": "Lists enrolled user identities and operational statuses.",
+        "operationId": "admin_list_users",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response Admin List Users"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/users/{user_id}": {
+      "get": {
+        "tags": [
+          "Admin Users"
+        ],
+        "summary": "Get User",
+        "description": "Retrieves identity details and template metadata for a specific user.",
+        "operationId": "admin_get_user",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Admin Get User"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin Users"
+        ],
+        "summary": "Delete User",
+        "description": "GDPR Article 17 erasure: purges identity and encrypted biometric templates completely.",
+        "operationId": "admin_delete_user",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Admin Delete User"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/users/{user_id}/disable": {
+      "post": {
+        "tags": [
+          "Admin Users"
+        ],
+        "summary": "Disable User",
+        "description": "Deactivates a user identity, suppressing verification without deleting biometric data.",
+        "operationId": "admin_disable_user",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserStatusResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/users/{user_id}/enable": {
+      "post": {
+        "tags": [
+          "Admin Users"
+        ],
+        "summary": "Enable User",
+        "description": "Reactivates a disabled user identity.",
+        "operationId": "admin_enable_user",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserStatusResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/users/{user_id}/export": {
+      "get": {
+        "tags": [
+          "Admin Users"
+        ],
+        "summary": "Export User",
+        "description": "GDPR Article 15 export delivering metadata and chronological audit activity.",
+        "operationId": "admin_export_user",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserExportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/admins": {
+      "get": {
+        "tags": [
+          "Admin System"
+        ],
+        "summary": "List Admins",
+        "description": "Lists all administrator accounts.",
+        "operationId": "admin_list_admins",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AdminSummary"
+                  },
+                  "type": "array",
+                  "title": "Response Admin List Admins"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Admin System"
+        ],
+        "summary": "Create Admin",
+        "description": "Creates a new administrator account (Owner only).",
+        "operationId": "admin_create_admin",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSummary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/admins/{admin_id}": {
+      "patch": {
+        "tags": [
+          "Admin System"
+        ],
+        "summary": "Update Admin",
+        "description": "Updates role or active status of an admin account (Owner only).",
+        "operationId": "admin_update_admin",
+        "parameters": [
+          {
+            "name": "admin_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Admin Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Admin Update Admin"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/admins/{admin_id}/unlock": {
+      "post": {
+        "tags": [
+          "Admin System"
+        ],
+        "summary": "Unlock Admin",
+        "description": "Clears failed login lockout on an admin account (Owner only).",
+        "operationId": "admin_unlock_admin",
+        "parameters": [
+          {
+            "name": "admin_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Admin Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Admin Unlock Admin"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/audit": {
+      "get": {
+        "tags": [
+          "Admin System"
+        ],
+        "summary": "Query Audit",
+        "description": "Queries audit events with optional filtering by event type, decision, or device.",
+        "operationId": "admin_query_audit",
+        "parameters": [
+          {
+            "name": "event_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Event Type"
+            }
+          },
+          {
+            "name": "decision",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Decision"
+            }
+          },
+          {
+            "name": "device_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Device Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditQueryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/audit/export": {
+      "get": {
+        "tags": [
+          "Admin System"
+        ],
+        "summary": "Export Audit Csv",
+        "description": "Streams audit events as a downloadable CSV file.",
+        "operationId": "admin_export_audit_csv",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 10000,
+              "minimum": 1,
+              "default": 1000,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/settings": {
+      "get": {
+        "tags": [
+          "Admin System"
+        ],
+        "summary": "Get Settings",
+        "description": "Reads system configuration settings.",
+        "operationId": "admin_get_settings",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemSettingsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Admin System"
+        ],
+        "summary": "Update Settings",
+        "description": "Updates runtime system settings with validation and audit logging (Owner only).",
+        "operationId": "admin_update_settings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SystemSettingsUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Admin Update Settings"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/system/status": {
+      "get": {
+        "tags": [
+          "Admin System"
+        ],
+        "summary": "Get System Status",
+        "description": "Returns telemetry on model version, gallery size, queue health, and device counts.",
+        "operationId": "admin_system_status",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemStatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/security/status": {
+      "get": {
+        "tags": [
+          "Admin System"
+        ],
+        "summary": "Get Security Status",
+        "description": "Returns active cryptographic security posture, template protection state, and anomaly detector telemetry.",
+        "operationId": "admin_security_status",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecurityStatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/payload-key": {
+      "get": {
+        "tags": [
+          "Security & Key Management"
+        ],
+        "summary": "Get Active Server Payload Sealing Public Key",
+        "description": "Returns the server's active X25519 public key.\nEdge clients use this public key with ephemeral ECDH to seal PartialFace payloads in PF02 envelopes.",
+        "operationId": "get_payload_key",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayloadKeyResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AdminCreateRequest": {
+        "properties": {
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role",
+            "default": "operator"
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "AdminCreateRequest"
+      },
+      "AdminSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "failed_logins": {
+            "type": "integer",
+            "title": "Failed Logins"
+          },
+          "locked_until": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locked Until"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "username",
+          "role",
+          "is_active",
+          "failed_logins",
+          "created_at"
+        ],
+        "title": "AdminSummary"
+      },
+      "AdminUpdateRequest": {
+        "properties": {
+          "role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "title": "AdminUpdateRequest"
+      },
+      "AuditQueryResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cursor"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "limit"
+        ],
+        "title": "AuditQueryResponse"
+      },
+      "CandidateMatch": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "similarity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Similarity"
+          },
+          "rank": {
+            "type": "integer",
+            "title": "Rank"
+          },
+          "is_match": {
+            "type": "boolean",
+            "title": "Is Match"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "rank",
+          "is_match"
+        ],
+        "title": "CandidateMatch",
+        "description": "Candidate match record in 1:N biometric identification."
+      },
+      "DeleteResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "deleted"
+          },
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "message"
+        ],
+        "title": "DeleteResponse",
+        "description": "Result of identity template deletion."
+      },
+      "DeviceActionRequest": {
+        "properties": {
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "title": "DeviceActionRequest"
+      },
+      "DeviceDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "scopes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Scopes"
+          },
+          "public_key": {
+            "type": "string",
+            "title": "Public Key"
+          },
+          "key_id": {
+            "type": "string",
+            "title": "Key Id"
+          },
+          "software_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Software Version"
+          },
+          "approved_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved By"
+          },
+          "last_seen": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Seen"
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revoked At"
+          },
+          "revocation_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revocation Reason"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "recent_heartbeats": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Recent Heartbeats"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "state",
+          "scopes",
+          "public_key",
+          "key_id",
+          "created_at"
+        ],
+        "title": "DeviceDetail"
+      },
+      "DeviceHeartbeatRequest": {
+        "properties": {
+          "software_version": {
+            "type": "string",
+            "title": "Software Version",
+            "default": "0.1.0"
+          },
+          "camera_ok": {
+            "type": "boolean",
+            "title": "Camera Ok",
+            "default": true
+          },
+          "uptime_seconds": {
+            "type": "number",
+            "title": "Uptime Seconds",
+            "default": 0.0
+          },
+          "queued_payloads": {
+            "type": "integer",
+            "title": "Queued Payloads",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "DeviceHeartbeatRequest"
+      },
+      "DeviceHeartbeatResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "ok"
+          },
+          "server_time": {
+            "type": "string",
+            "title": "Server Time"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "config": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Config"
+          }
+        },
+        "type": "object",
+        "required": [
+          "server_time",
+          "state"
+        ],
+        "title": "DeviceHeartbeatResponse"
+      },
+      "DevicePairRequest": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "title": "Token"
+          },
+          "public_key": {
+            "type": "string",
+            "title": "Public Key"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "software_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Software Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token",
+          "public_key",
+          "name"
+        ],
+        "title": "DevicePairRequest"
+      },
+      "DevicePairResponse": {
+        "properties": {
+          "device_id": {
+            "type": "string",
+            "title": "Device Id"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "key_id": {
+            "type": "string",
+            "title": "Key Id"
+          },
+          "server_time": {
+            "type": "string",
+            "title": "Server Time"
+          }
+        },
+        "type": "object",
+        "required": [
+          "device_id",
+          "state",
+          "key_id",
+          "server_time"
+        ],
+        "title": "DevicePairResponse"
+      },
+      "DeviceRotateKeyRequest": {
+        "properties": {
+          "new_public_key": {
+            "type": "string",
+            "title": "New Public Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "new_public_key"
+        ],
+        "title": "DeviceRotateKeyRequest"
+      },
+      "DeviceRotateKeyResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "key_rotated"
+          },
+          "key_id": {
+            "type": "string",
+            "title": "Key Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key_id"
+        ],
+        "title": "DeviceRotateKeyResponse"
+      },
+      "DeviceSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "scopes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Scopes"
+          },
+          "key_id": {
+            "type": "string",
+            "title": "Key Id"
+          },
+          "software_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Software Version"
+          },
+          "last_seen": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Seen"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "state",
+          "scopes",
+          "key_id",
+          "created_at"
+        ],
+        "title": "DeviceSummary"
+      },
+      "DeviceUpdateRequest": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "scopes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scopes"
+          }
+        },
+        "type": "object",
+        "title": "DeviceUpdateRequest"
+      },
+      "EnrollResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "enrolled"
+          },
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "template_id": {
+            "type": "string",
+            "title": "Template Id"
+          },
+          "frames_processed": {
+            "type": "integer",
+            "title": "Frames Processed"
+          },
+          "frames_accepted": {
+            "type": "integer",
+            "title": "Frames Accepted"
+          },
+          "outliers_rejected": {
+            "type": "integer",
+            "title": "Outliers Rejected"
+          },
+          "quality_score": {
+            "type": "number",
+            "title": "Quality Score",
+            "default": 0.95
+          },
+          "duplicate_warning": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duplicate Warning"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "template_id",
+          "frames_processed",
+          "frames_accepted",
+          "outliers_rejected"
+        ],
+        "title": "EnrollResponse",
+        "description": "Result of multi-frame biometric enrollment."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "ok"
+          },
+          "service": {
+            "type": "string",
+            "title": "Service",
+            "default": "freqid-server"
+          }
+        },
+        "type": "object",
+        "title": "HealthResponse",
+        "description": "Liveness probe response."
+      },
+      "IdentifyResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "success"
+          },
+          "request_id": {
+            "type": "string",
+            "title": "Request Id"
+          },
+          "is_match": {
+            "type": "boolean",
+            "title": "Is Match"
+          },
+          "top_candidate": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CandidateMatch"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/CandidateMatch"
+            },
+            "type": "array",
+            "title": "Candidates"
+          }
+        },
+        "type": "object",
+        "required": [
+          "request_id",
+          "is_match"
+        ],
+        "title": "IdentifyResponse",
+        "description": "Result of 1:N biometric identification."
+      },
+      "ModelInfoResponse": {
+        "properties": {
+          "model_version": {
+            "type": "string",
+            "title": "Model Version"
+          },
+          "backend": {
+            "type": "string",
+            "title": "Backend"
+          },
+          "device": {
+            "type": "string",
+            "title": "Device"
+          },
+          "embedding_dim": {
+            "type": "integer",
+            "title": "Embedding Dim"
+          },
+          "input_channels": {
+            "type": "integer",
+            "title": "Input Channels"
+          },
+          "checkpoint_sha256": {
+            "type": "string",
+            "title": "Checkpoint Sha256"
+          }
+        },
+        "type": "object",
+        "required": [
+          "model_version",
+          "backend",
+          "device",
+          "embedding_dim",
+          "input_channels",
+          "checkpoint_sha256"
+        ],
+        "title": "ModelInfoResponse",
+        "description": "Public non-sensitive metadata for active server model."
+      },
+      "ModelMigrationReportResponse": {
+        "properties": {
+          "active_model_version": {
+            "type": "string",
+            "title": "Active Model Version"
+          },
+          "total_templates": {
+            "type": "integer",
+            "title": "Total Templates"
+          },
+          "compatible_templates": {
+            "type": "integer",
+            "title": "Compatible Templates"
+          },
+          "needs_reenrollment_count": {
+            "type": "integer",
+            "title": "Needs Reenrollment Count"
+          },
+          "outdated_model_breakdown": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Outdated Model Breakdown"
+          }
+        },
+        "type": "object",
+        "required": [
+          "active_model_version",
+          "total_templates",
+          "compatible_templates",
+          "needs_reenrollment_count"
+        ],
+        "title": "ModelMigrationReportResponse",
+        "description": "Report on templates requiring re-enrollment across model versions."
+      },
+      "PairingTokenCreateRequest": {
+        "properties": {
+          "name_hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name Hint"
+          },
+          "location_hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Hint"
+          },
+          "scopes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Scopes"
+          },
+          "expires_in_minutes": {
+            "type": "integer",
+            "title": "Expires In Minutes",
+            "default": 15
+          }
+        },
+        "type": "object",
+        "title": "PairingTokenCreateRequest"
+      },
+      "PairingTokenCreateResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "token": {
+            "type": "string",
+            "title": "Token"
+          },
+          "expires_at": {
+            "type": "string",
+            "title": "Expires At"
+          },
+          "scopes_allowed": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Scopes Allowed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "token",
+          "expires_at",
+          "scopes_allowed"
+        ],
+        "title": "PairingTokenCreateResponse"
+      },
+      "PayloadKeyResponse": {
+        "properties": {
+          "key_id": {
+            "type": "string",
+            "title": "Key Id",
+            "description": "Active master key identifier"
+          },
+          "public_key_hex": {
+            "type": "string",
+            "title": "Public Key Hex",
+            "description": "Raw X25519 public key in hexadecimal (32 bytes / 64 hex chars)"
+          },
+          "algorithm": {
+            "type": "string",
+            "title": "Algorithm",
+            "description": "Key agreement and AEAD algorithm suite",
+            "default": "X25519-HKDF-AES256GCM"
+          },
+          "format": {
+            "type": "string",
+            "title": "Format",
+            "description": "Application layer envelope format version",
+            "default": "PF02"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key_id",
+          "public_key_hex"
+        ],
+        "title": "PayloadKeyResponse"
+      },
+      "ReadyResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "ready"
+          },
+          "model_loaded": {
+            "type": "boolean",
+            "title": "Model Loaded"
+          },
+          "model_version": {
+            "type": "string",
+            "title": "Model Version"
+          },
+          "backend": {
+            "type": "string",
+            "title": "Backend"
+          },
+          "device": {
+            "type": "string",
+            "title": "Device"
+          },
+          "store_connected": {
+            "type": "boolean",
+            "title": "Store Connected"
+          },
+          "enrolled_identities": {
+            "type": "integer",
+            "title": "Enrolled Identities"
+          }
+        },
+        "type": "object",
+        "required": [
+          "model_loaded",
+          "model_version",
+          "backend",
+          "device",
+          "store_connected",
+          "enrolled_identities"
+        ],
+        "title": "ReadyResponse",
+        "description": "Readiness probe response."
+      },
+      "SecurityStatusResponse": {
+        "properties": {
+          "tls_min_version": {
+            "type": "string",
+            "title": "Tls Min Version",
+            "default": "TLSv1.2"
+          },
+          "active_master_key_id": {
+            "type": "string",
+            "title": "Active Master Key Id"
+          },
+          "key_hierarchy_configured": {
+            "type": "boolean",
+            "title": "Key Hierarchy Configured",
+            "default": true
+          },
+          "template_protection": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Template Protection"
+          },
+          "payload_sealing": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload Sealing"
+          },
+          "anomaly_detector": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Anomaly Detector"
+          }
+        },
+        "type": "object",
+        "required": [
+          "active_master_key_id",
+          "template_protection",
+          "payload_sealing",
+          "anomaly_detector"
+        ],
+        "title": "SecurityStatusResponse"
+      },
+      "SystemSettingsResponse": {
+        "properties": {
+          "settings": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Settings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "settings"
+        ],
+        "title": "SystemSettingsResponse"
+      },
+      "SystemSettingsUpdateRequest": {
+        "properties": {
+          "settings": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Settings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "settings"
+        ],
+        "title": "SystemSettingsUpdateRequest"
+      },
+      "SystemStatusResponse": {
+        "properties": {
+          "model_version": {
+            "type": "string",
+            "title": "Model Version"
+          },
+          "gallery_size": {
+            "type": "integer",
+            "title": "Gallery Size"
+          },
+          "queue_depth": {
+            "type": "integer",
+            "title": "Queue Depth"
+          },
+          "device_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Device Counts"
+          },
+          "devices_offline": {
+            "type": "integer",
+            "title": "Devices Offline"
+          },
+          "audit_queue_size": {
+            "type": "integer",
+            "title": "Audit Queue Size"
+          }
+        },
+        "type": "object",
+        "required": [
+          "model_version",
+          "gallery_size",
+          "queue_depth",
+          "device_counts",
+          "devices_offline",
+          "audit_queue_size"
+        ],
+        "title": "SystemStatusResponse"
+      },
+      "UserExportResponse": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "title": "Updated At"
+          },
+          "template_metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template Metadata"
+          },
+          "audit_events": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Audit Events"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "status",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "UserExportResponse",
+        "description": "Export of user profile, template metadata, and audit events (never plaintext biometrics)."
+      },
+      "UserStatusResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "user_id",
+          "message"
+        ],
+        "title": "UserStatusResponse",
+        "description": "Result of user activation or deactivation."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "VerifyResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "success"
+          },
+          "request_id": {
+            "type": "string",
+            "title": "Request Id"
+          },
+          "is_match": {
+            "type": "boolean",
+            "title": "Is Match"
+          },
+          "similarity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Similarity"
+          },
+          "threshold": {
+            "type": "number",
+            "title": "Threshold"
+          },
+          "claimed_identity": {
+            "type": "string",
+            "title": "Claimed Identity"
+          },
+          "verified_identity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verified Identity"
+          },
+          "device_id": {
+            "type": "string",
+            "title": "Device Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "request_id",
+          "is_match",
+          "threshold",
+          "claimed_identity",
+          "device_id"
+        ],
+        "title": "VerifyResponse",
+        "description": "Result of 1:1 biometric verification."
+      }
+    }
+  }
+}

@@ -28,6 +28,9 @@ class ClientConfig:
     device_id: str = "dev_default"
     auth_token: str | None = None
     ca_cert_path: str | None = None
+    client_cert_path: str | None = None
+    client_key_path: str | None = None
+    pinned_cert_fingerprint: str | None = None
     insecure_skip_verify: bool = False
     request_timeout_seconds: float = 10.0
     max_retries: int = 3
@@ -55,6 +58,11 @@ class ClientConfig:
     # Privacy & Debugging
     debug_save_dir: str | None = None
     compress_payload: bool = True
+
+    # Application-Layer Payload Sealing (Phase 8)
+    seal_payloads: bool = False
+    server_payload_public_key_hex: str | None = None
+    payload_key_id: str | None = None
 
     def __post_init__(self) -> None:
         if self.debug_save_dir:
@@ -103,6 +111,12 @@ class ClientConfig:
             cfg.auth_token = os.environ["FREQID_AUTH_TOKEN"]
         if os.getenv("FREQID_CA_CERT_PATH"):
             cfg.ca_cert_path = os.environ["FREQID_CA_CERT_PATH"]
+        if os.getenv("FREQID_CLIENT_CERT_PATH"):
+            cfg.client_cert_path = os.environ["FREQID_CLIENT_CERT_PATH"]
+        if os.getenv("FREQID_CLIENT_KEY_PATH"):
+            cfg.client_key_path = os.environ["FREQID_CLIENT_KEY_PATH"]
+        if os.getenv("FREQID_PINNED_CERT_FINGERPRINT"):
+            cfg.pinned_cert_fingerprint = os.environ["FREQID_PINNED_CERT_FINGERPRINT"]
         if os.getenv("FREQID_INSECURE_SKIP_VERIFY"):
             cfg.insecure_skip_verify = os.environ["FREQID_INSECURE_SKIP_VERIFY"].lower() in ("1", "true", "yes")
         if os.getenv("FREQID_CAMERA_INDEX"):

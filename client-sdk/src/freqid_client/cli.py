@@ -17,7 +17,13 @@ from pathlib import Path
 
 import httpx
 
-from freqid_client.auth import NoAuth, StaticTokenAuthenticator
+from freqid_client.auth import (
+    DeviceSignatureAuthenticator,
+    NoAuth,
+    StaticTokenAuthenticator,
+    load_device_credentials,
+    pair_device,
+)
 from freqid_client.camera import WebcamSource
 from freqid_client.config import ClientConfig
 from freqid_client.detect import YuNetFaceDetector
@@ -156,6 +162,66 @@ def cmd_enroll(args: argparse.Namespace, cfg: ClientConfig) -> int:
     return 0
 
 
+def cmd_pair(args: argparse.Namespace, cfg: ClientConfig) -> int:
+    print(f"=== Pairing Edge Device with FreqID Server ===")
+    print(f"[*] Target Server: {args.server}")
+    print(f"[*] Device Name:   {args.name}")
+
+    try:
+        result = pair_device(
+            server_url=args.server,
+            token=args.token,
+            name=args.name,
+            credentials_path=args.credentials,
+            insecure_skip_verify=args.insecure_skip_verify,
+            ca_cert_path=args.ca_cert,
+        )
+    except Exception as e:
+        print(f"[FAIL] Pairing failed: {e}", file=sys.stderr)
+        return 1
+
+    print("[SUCCESS] Device successfully paired with server.")
+    print(f"          Device ID: {result['device_id']}")
+    print(f"          Status:    {result['state']}")
+    print(f"          Key ID:    {result['key_id']}")
+    print(f"          Credentials stored at: {result['credentials_path']} (POSIX 0600)")
+    print("          [PRIVACY] Private key stored locally; zero keys or tokens logged.")
+    return 0
+
+
+def cmd_status(args: argparse.Namespace, cfg: ClientConfig) -> int:
+    print("=== FreqID Edge Device Status ===")
+    creds_path = Path(args.credentials).expanduser().resolve()
+    if not creds_path.is_file():
+        print(f"[FAIL] Device is not paired. Credentials file not found: {creds_path}")
+        return 1
+
+    try:
+        creds = load_device_credentials(creds_path)
+    except Exception as e:
+        print(f"[FAIL] Cannot load credentials: {e}")
+        return 1
+
+    print(f"[*] Device ID:     {creds.get('device_id')}")
+    print(f"[*] Device Name:   {creds.get('device_name')}")
+    print(f"[*] Server URL:    {creds.get('server_url')}")
+    print(f"[*] Key ID:        {creds.get('key_id')}")
+    print(f"[*] Credentials:   {creds_path} (Owner-only permissions verified)")
+
+    # Check server reachability
+    server_url = creds.get("server_url", cfg.server_url)
+    try:
+        r = httpx.get(f"{server_url}/healthz", timeout=3.0)
+        if r.status_code == 200:
+            print(f"[PASS] Server Connectivity: Reachable ({server_url})")
+        else:
+            print(f"[WARN] Server Connectivity: HTTP {r.status_code}")
+    except Exception as e:
+        print(f"[WARN] Server Connectivity: Cannot reach server ({e})")
+
+    return 0
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="FreqID Privacy-Preserving Edge Client SDK CLI")
     parser.add_argument("--config", "-c", default=None, help="Path to config YAML file")
@@ -164,6 +230,19 @@ def main() -> None:
 
     # check
     subparsers.add_parser("check", help="Run device and connectivity diagnostics")
+
+    # pair
+    p_pair = subparsers.add_parser("pair", help="Pair device with server using single-use token")
+    p_pair.add_argument("--server", "-s", required=True, help="FreqID server URL (e.g. https://server:8000)")
+    p_pair.add_argument("--token", "-t", required=True, help="Single-use pairing token")
+    p_pair.add_argument("--name", "-n", default="Edge Camera", help="Device name")
+    p_pair.add_argument("--credentials", default="~/.freqid/device_credentials.json", help="Path to credentials file")
+    p_pair.add_argument("--insecure-skip-verify", action="store_true", help="Skip TLS verification (dev only)")
+    p_pair.add_argument("--ca-cert", default=None, help="Path to CA certificate")
+
+    # status
+    p_stat = subparsers.add_parser("status", help="Show device pairing state and reachability")
+    p_stat.add_argument("--credentials", default="~/.freqid/device_credentials.json", help="Path to credentials file")
 
     # capture
     p_cap = subparsers.add_parser("capture", help="Capture single face and write payload to file")
@@ -188,6 +267,10 @@ def main() -> None:
 
     if args.command == "check":
         sys.exit(cmd_check(args, cfg))
+    elif args.command == "pair":
+        sys.exit(cmd_pair(args, cfg))
+    elif args.command == "status":
+        sys.exit(cmd_status(args, cfg))
     elif args.command == "capture":
         sys.exit(cmd_capture(args, cfg))
     elif args.command == "verify":

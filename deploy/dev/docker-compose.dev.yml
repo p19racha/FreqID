@@ -1,0 +1,29 @@
+# Copyright 2026 FreqID Authors. Apache-2.0 License.
+# Development PostgreSQL Compose Stack for FreqID Phase 5
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: freqid-dev-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${FREQID_DB_NAME:-freqid}
+      POSTGRES_USER: ${FREQID_DB_ADMIN_USER:-freqid_admin}
+      POSTGRES_PASSWORD: ${FREQID_DB_ADMIN_PASSWORD:-freqid_admin_dev_password}
+      FREQID_APP_PASSWORD: ${FREQID_APP_PASSWORD:-freqid_app_dev_secret}
+      FREQID_MAINT_PASSWORD: ${FREQID_MAINT_PASSWORD:-freqid_maint_dev_secret}
+    ports:
+      - "${FREQID_DB_PORT:-54322}:5432"
+    volumes:
+      - freqid_postgres_dev_data:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/01-init-db.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${FREQID_DB_ADMIN_USER:-freqid_admin} -d ${FREQID_DB_NAME:-freqid}"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+      start_period: 2s
+
+volumes:
+  freqid_postgres_dev_data:
+    name: freqid_postgres_dev_data
