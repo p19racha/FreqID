@@ -1,0 +1,126 @@
+# Copyright 2026 FreqID Authors. Apache-2.0 License.
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - main
+      - freqid-dev
+      - phase9-release
+  pull_request:
+    branches:
+      - master
+      - main
+      - freqid-dev
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ============================================================================
+  # 1. Python Backend, Core & Client SDK Test Suite
+  # ============================================================================
+  python-tests:
+    name: Python ${{ matrix.python-version }} Tests & Lint
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: freqid
+          POSTGRES_USER: freqid_admin
+          POSTGRES_PASSWORD: freqid_admin_dev_password
+        ports:
+          - 54322:5432
+        options: >-
+          --health-cmd "pg_isready -U freqid_admin -d freqid"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Upgrade pip and install build toolchains
+        run: python -m pip install --upgrade pip wheel setuptools
+
+      - name: Install dependencies (core, client, backend)
+        run: |
+          pip install -e "./core[all]"
+          pip install -e "./client-sdk[all]"
+          pip install -e "./backend[all]"
+
+      - name: Code formatting and linting (ruff)
+        run: |
+          ruff check core client-sdk backend
+          ruff format --check core client-sdk backend
+
+      - name: Static type checking (mypy)
+        run: |
+          mypy core/src client-sdk/src backend/src
+
+      - name: Execute core unit tests
+        run: |
+          pytest core/tests/ -v --cov=freqid_core
+
+      - name: Execute client-sdk unit tests
+        run: |
+          pytest client-sdk/tests/ -v --cov=freqid_client
+
+      - name: Execute server unit and integration tests
+        env:
+          FREQID_DATABASE_URL: postgresql+asyncpg://freqid_admin:freqid_admin_dev_password@127.0.0.1:54322/freqid
+          FREQID_SERVER_DATABASE_URL: postgresql+asyncpg://freqid_admin:freqid_admin_dev_password@127.0.0.1:54322/freqid
+        run: |
+          pytest backend/tests/ -v --cov=freqid_server
+
+  # ============================================================================
+  # 2. React / TypeScript Admin UI Test Suite
+  # ============================================================================
+  ui-tests:
+    name: Admin UI React & TypeScript Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install pnpm
+        run: npm install -g pnpm@10.27.0
+
+      - name: Install Admin UI dependencies
+        run: pnpm --dir admin-ui install --frozen-lockfile
+
+      - name: Verify zero camera / sensor usage
+        run: pnpm --dir admin-ui check:no-camera
+
+      - name: Lint and typecheck
+        run: |
+          pnpm --dir admin-ui lint
+          pnpm --dir admin-ui typecheck
+
+      - name: Execute Vitest unit tests
+        run: pnpm --dir admin-ui test
+
+      - name: Production SPA build test
+        run: pnpm --dir admin-ui build

@@ -1,0 +1,106 @@
+# Copyright 2026 FreqID Authors. Apache-2.0 License.
+name: Docker Container Build & Verify
+
+on:
+  push:
+    branches:
+      - master
+      - main
+      - freqid-dev
+      - phase9-release
+    paths:
+      - "backend/**"
+      - "admin-ui/**"
+      - "deploy/**"
+      - ".dockerignore"
+      - ".github/workflows/docker.yml"
+  pull_request:
+    branches:
+      - master
+      - main
+      - freqid-dev
+    paths:
+      - "backend/**"
+      - "admin-ui/**"
+      - "deploy/**"
+      - ".dockerignore"
+      - ".github/workflows/docker.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docker-build-verify:
+    name: Build & Audit Hardened Containers
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # ------------------------------------------------------------------------
+      # 1. Build and Audit Server Container
+      # ------------------------------------------------------------------------
+      - name: Build freqid/server container
+        run: |
+          docker build -t freqid/server:0.1.0 -f backend/Dockerfile .
+
+      - name: Audit unprivileged user execution (server)
+        run: |
+          USER_ID=$(docker run --rm --entrypoint id freqid/server:0.1.0 -u)
+          if [ "$USER_ID" -eq 0 ]; then
+            echo "[-] Error: freqid/server must not execute as root (UID: $USER_ID)" >&2
+            exit 1
+          fi
+          echo "[+] Verified unprivileged execution (UID: $USER_ID)"
+
+      - name: Audit zero model weights baked into image layers
+        run: |
+          WEIGHT_COUNT=$(docker run --rm --entrypoint sh freqid/server:0.1.0 -c 'find /app /home -name "*.onnx" -o -name "*.pt" -o -name "*.pth" -o -name "*.safetensors" 2>/dev/null | wc -l')
+          if [ "$WEIGHT_COUNT" -ne 0 ]; then
+            echo "[-] Error: Detected model weights baked into image layers ($WEIGHT_COUNT files found)" >&2
+            exit 1
+          fi
+          echo "[+] Verified zero model weights bundled inside container"
+
+      - name: Audit read-only root filesystem compatibility
+        run: |
+          docker run --rm --read-only --tmpfs /tmp:rw,noexec,nosuid,size=64m freqid/server:0.1.0 --help
+
+      # ------------------------------------------------------------------------
+      # 2. Build and Audit Admin UI Container
+      # ------------------------------------------------------------------------
+      - name: Build freqid/admin-ui container
+        run: |
+          docker build -t freqid/admin-ui:0.1.0 -f admin-ui/Dockerfile admin-ui/
+
+      - name: Audit unprivileged user execution (admin-ui)
+        run: |
+          USER_ID=$(docker run --rm --entrypoint id freqid/admin-ui:0.1.0 -u)
+          if [ "$USER_ID" -eq 0 ]; then
+            echo "[-] Error: freqid/admin-ui must not execute as root (UID: $USER_ID)" >&2
+            exit 1
+          fi
+          echo "[+] Verified unprivileged execution (UID: $USER_ID)"
+
+      - name: Audit read-only root filesystem compatibility (admin-ui)
+        run: |
+          docker run --rm --read-only \
+            --tmpfs /tmp:rw,noexec,nosuid,size=64m \
+            --tmpfs /var/cache/nginx:rw,noexec,nosuid,size=64m \
+            --tmpfs /var/run:rw,noexec,nosuid,size=16m \
+            freqid/admin-ui:0.1.0 nginx -t
+
+      # ------------------------------------------------------------------------
+      # 3. Stack Smoke Test
+      # ------------------------------------------------------------------------
+      - name: Validate Docker Compose stack initialization
+        run: |
+          ./deploy/scripts/init.sh
+          cd deploy
+          docker compose config > /dev/null
+          echo "[+] Docker Compose stack validated successfully"
