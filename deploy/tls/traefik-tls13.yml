@@ -1,0 +1,37 @@
+# Copyright 2026 FreqID Authors. Apache-2.0 License.
+# Traefik v3 Dynamic Configuration: Strict TLS 1.3 & mTLS
+
+tls:
+  options:
+    default:
+      minVersion: "VersionTLS13"
+      sniStrict: true
+      cipherSuites:
+        - "TLS_AES_256_GCM_SHA384"
+        - "TLS_CHACHA20_POLY1305_SHA256"
+        - "TLS_AES_128_GCM_SHA256"
+      curvePreferences:
+        - "X25519"
+        - "CurveP256"
+
+    # mTLS profile for edge device API endpoints
+    mtls_profile:
+      minVersion: "VersionTLS13"
+      clientAuth:
+        caFiles:
+          - "/etc/traefik/certs/freqid_internal_ca.crt"
+        clientAuthType: "RequireAndVerifyClientCert"
+
+http:
+  middlewares:
+    freqid-security-headers:
+      headers:
+        stsSeconds: 63072000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        forceSTSHeader: true
+        customFrameOptionsValue: "DENY"
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        permissionsPolicy: "camera=(), microphone=(), geolocation=()"
