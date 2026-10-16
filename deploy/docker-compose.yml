@@ -84,6 +84,7 @@ services:
       FREQID_SERVER_MASK_SCORES_IN_PRODUCTION: ${FREQID_SERVER_MASK_SCORES_IN_PRODUCTION:-true}
       FREQID_SERVER_RATE_LIMIT_PER_MINUTE: ${FREQID_SERVER_RATE_LIMIT_PER_MINUTE:-120}
       FREQID_SERVER_MAX_INFERENCE_WORKERS: ${FREQID_SERVER_MAX_INFERENCE_WORKERS:-4}
+      FREQID_SERVER_AUDIT_ENABLE_HASH_CHAIN: ${FREQID_SERVER_AUDIT_ENABLE_HASH_CHAIN:-true}
     volumes:
       - ./models:/app/models:ro
     secrets:
@@ -136,7 +137,8 @@ services:
   migrate:
     image: freqid/server:${FREQID_VERSION:-0.1.0}
     container_name: freqid-migrate
-    entrypoint: ["alembic", "upgrade", "head"]
+    entrypoint: ["alembic"]
+    command: ["upgrade", "head"]
     restart: "no"
     read_only: true
     tmpfs:

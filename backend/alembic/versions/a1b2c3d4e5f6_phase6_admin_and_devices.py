@@ -148,6 +148,10 @@ def upgrade() -> None:
         type_=sa.UUID(),
         postgresql_using="CASE WHEN admin_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN admin_id::uuid ELSE NULL END"
     )
+    # Clean orphan IDs in existing audit records before creating foreign key constraints
+    op.execute("UPDATE audit_events SET device_id = NULL WHERE device_id IS NOT NULL AND device_id NOT IN (SELECT id FROM devices)")
+    op.execute("UPDATE audit_events SET admin_id = NULL WHERE admin_id IS NOT NULL AND admin_id NOT IN (SELECT id FROM admin_users)")
+
     op.create_foreign_key(
         'fk_audit_events_device_id_devices',
         'audit_events',
@@ -180,6 +184,10 @@ def upgrade() -> None:
         type_=sa.UUID(),
         postgresql_using="CASE WHEN admin_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN admin_id::uuid ELSE NULL END"
     )
+    # Clean orphan IDs in existing enrollment sessions before creating foreign key constraints
+    op.execute("UPDATE enrollment_sessions SET device_id = NULL WHERE device_id IS NOT NULL AND device_id NOT IN (SELECT id FROM devices)")
+    op.execute("UPDATE enrollment_sessions SET admin_id = NULL WHERE admin_id IS NOT NULL AND admin_id NOT IN (SELECT id FROM admin_users)")
+
     op.create_foreign_key(
         'fk_enrollment_sessions_device_id_devices',
         'enrollment_sessions',

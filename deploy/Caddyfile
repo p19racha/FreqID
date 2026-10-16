@@ -49,6 +49,7 @@
     # Proxy API, OpenAPI documentation, and healthcheck routes directly to FastAPI server
     @api_routes {
         path /v1/*
+        path /api/*
         path /healthz
         path /readyz
         path /metrics
