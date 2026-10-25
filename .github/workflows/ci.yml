@@ -74,6 +74,12 @@ jobs:
         run: |
           mypy core/src client-sdk/src backend/src
 
+      - name: Bootstrap test environment (model checkpoints and database)
+        env:
+          FREQID_DATABASE_URL: postgresql+asyncpg://freqid_admin:freqid_admin_dev_password@127.0.0.1:54322/freqid
+        run: |
+          python backend/scripts/init_test_env.py
+
       - name: Execute core unit tests
         run: |
           pytest core/tests/ -v --cov=freqid_core

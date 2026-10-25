@@ -100,10 +100,11 @@ async def api_client(app_with_postgres) -> httpx.AsyncClient:
 
 def make_payload_stream(num_frames: int = 3, seed: int = 42) -> bytes:
     rng = np.random.RandomState(seed)
+    base_data = rng.randn(27, 112, 112).astype(np.float32)
     payloads = []
     for _ in range(num_frames):
-        data = rng.randn(27, 112, 112).astype(np.float32)
-        payloads.append(fq.PartialFacePayload(data=data))
+        noise = rng.randn(27, 112, 112).astype(np.float32) * 0.01
+        payloads.append(fq.PartialFacePayload(data=base_data + noise))
     return EnrollmentService.pack_framed_payloads(payloads)
 
 

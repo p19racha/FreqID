@@ -240,6 +240,7 @@ async def test_all_routes_enforce_auth_or_are_allowlisted(sec_env):
     PUBLIC_ALLOWLIST = {
         "/healthz",
         "/readyz",
+        "/metrics",
         "/v1/model",
         "/v1/model/migration-report",
         "/v1/devices/pair",

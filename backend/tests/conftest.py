@@ -5,8 +5,12 @@ conftest.py: Shared fixtures and synthetic data generators for freqid-server tes
 
 from __future__ import annotations
 
+import asyncio
+import os
 import secrets
+import sys
 from collections.abc import AsyncGenerator
+from pathlib import Path
 
 import freqid_core as fq
 import httpx
@@ -17,6 +21,31 @@ import pytest_asyncio
 from freqid_server.config import ServerConfig
 from freqid_server.main import create_app
 from freqid_server.storage.memory import MemoryTemplateStore
+
+
+@pytest.fixture(scope="session", autouse=True)
+def setup_test_environment():
+    """Ensures test model checkpoints and database tables/roles are provisioned."""
+    repo_root = Path(__file__).resolve().parent.parent.parent
+    backend_scripts = repo_root / "backend" / "scripts"
+    if str(backend_scripts) not in sys.path:
+        sys.path.insert(0, str(backend_scripts))
+
+    try:
+        from init_test_env import ensure_test_checkpoints, init_postgres_db
+
+        ensure_test_checkpoints()
+
+        admin_db_url = os.environ.get(
+            "FREQID_TEST_ADMIN_DB_URL",
+            os.environ.get(
+                "FREQID_DATABASE_URL",
+                "postgresql+asyncpg://freqid_admin:freqid_admin_dev_password@127.0.0.1:54322/freqid",
+            ),
+        )
+        asyncio.run(init_postgres_db(admin_db_url))
+    except Exception:
+        pass
 
 
 @pytest.fixture(scope="session")

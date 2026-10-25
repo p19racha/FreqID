@@ -38,7 +38,8 @@ torch = [
 ]
 onnx = [
     "onnx>=1.14.0",
-    "onnxruntime>=1.16.0"
+    "onnxruntime>=1.16.0",
+    "onnxscript>=0.1.0"
 ]
 dev = [
     "pytest>=7.4.0",
