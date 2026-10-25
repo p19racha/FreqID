@@ -56,6 +56,14 @@ def get_embedder() -> Embedder | None:
     return _EMBEDDER
 
 
+def fallback_embed(payload: fq.PartialFacePayload) -> np.ndarray:
+    """Deterministic fallback embedding when model weights are unavailable."""
+    flat = payload.data.astype(np.float32, copy=False).reshape(-1)
+    emb = np.array([chunk.mean() for chunk in np.array_split(flat, 512)], dtype=np.float32)
+    norm = np.linalg.norm(emb)
+    return emb / norm if norm > 0 else emb
+
+
 @app.get("/health")
 def health_check() -> dict[str, str]:
     return {"status": "ok", "service": "freqid-mock-server"}
@@ -110,9 +118,7 @@ async def verify_endpoint(
     if embedder is not None:
         emb = embedder.embed(payload)
     else:
-        # Synthetic fallback if weights not found
-        emb = np.random.randn(512).astype(np.float32)
-        emb = emb / np.linalg.norm(emb)
+        emb = fallback_embed(payload)
 
     # Check against in-memory gallery
     is_match = False
@@ -174,8 +180,7 @@ async def identify_endpoint(
     if embedder is not None:
         emb = embedder.embed(payload)
     else:
-        emb = np.random.randn(512).astype(np.float32)
-        emb = emb / np.linalg.norm(emb)
+        emb = fallback_embed(payload)
 
     if not GALLERY:
         return JSONResponse(
@@ -255,8 +260,7 @@ async def enroll_endpoint(
         if embedder is not None:
             e = embedder.embed(p)
         else:
-            e = np.random.randn(512).astype(np.float32)
-            e = e / np.linalg.norm(e)
+            e = fallback_embed(p)
         embs.append(e)
 
     # Average and normalize enrolled template
