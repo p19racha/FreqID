@@ -1,0 +1,75 @@
+# Copyright 2026 FreqID Authors. Apache-2.0 License.
+# Production Caddyfile for FreqID Deployment Stack
+
+{
+    # Suppress admin API socket in production
+    admin off
+
+    # Output structured logs to stdout for Docker logging driver
+    log {
+        output stdout
+        format json
+    }
+}
+
+# Reusable security headers snippet
+(security_headers) {
+    header {
+        # Strict Transport Security (HSTS) - 2 years with preload
+        Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+
+        # Prevent MIME type sniffing
+        X-Content-Type-Options "nosniff"
+
+        # Prevent clickjacking / framing
+        X-Frame-Options "DENY"
+
+        # Strict referrer policy
+        Referrer-Policy "strict-origin-when-cross-origin"
+
+        # Content Security Policy: Strict self-only, unsafe-inline styles for Tailwind/shadcn, no eval, no frames
+        Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'self';"
+
+        # Permissions Policy: Strictly disallow camera, microphone, geolocation, and payment everywhere in the browser
+        Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+
+        # Conceal server implementation details
+        -Server
+    }
+}
+
+# Main Ingress Site Block
+# Default: :80 (Accepts all HTTP traffic). In production set DOMAIN_NAME=freqid.example.com in .env for auto-HTTPS.
+{$DOMAIN_NAME::80} {
+    import security_headers
+
+    # Compress API responses and static assets
+    encode zstd gzip
+
+    # Proxy API, OpenAPI documentation, and healthcheck routes directly to FastAPI server
+    @api_routes {
+        path /v1/*
+        path /api/*
+        path /healthz
+        path /readyz
+        path /metrics
+        path /docs*
+        path /redoc*
+        path /openapi.json
+    }
+    reverse_proxy @api_routes server:8000
+
+    # Proxy all dashboard routes and static SPA assets to Admin UI
+    reverse_proxy admin-ui:8080
+
+    # Optional mTLS Configuration for Edge Devices:
+    # To require client certificate authentication on edge routes, mount ca.crt into Caddy
+    # and uncomment the following block:
+    #
+    # tls {
+    #     client_auth {
+    #         mode require_and_verify
+    #         trust_pool file /etc/ssl/certs/ca.crt
+    #     }
+    # }
+}

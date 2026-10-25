@@ -35,6 +35,13 @@ async def test_health_and_readiness_endpoints(client: httpx.AsyncClient):
     assert model_data["input_channels"] == 27
     assert len(model_data["checkpoint_sha256"]) == 64
 
+    res_metrics = await client.get("/metrics")
+    assert res_metrics.status_code == 200
+    assert "freqid_up 1" in res_metrics.text
+    assert "freqid_model_loaded 1" in res_metrics.text
+    assert "freqid_store_connected" in res_metrics.text
+    assert "freqid_enrolled_identities" in res_metrics.text
+
 
 @pytest.mark.asyncio
 async def test_enrollment_and_lifecycle(

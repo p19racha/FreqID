@@ -1,8 +1,12 @@
 node_modules
 dist
 test-results
+playwright-report
 coverage
 .git
 .github
 *.log
 e2e
+*.tsbuildinfo
+.env
+*.env
