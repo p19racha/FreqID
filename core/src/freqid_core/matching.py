@@ -50,32 +50,32 @@ def cosine_similarity(
 
     # 1D vs 1D
     if a.ndim == 1 and b.ndim == 1:
-        norm_a = np.linalg.norm(a)
-        norm_b = np.linalg.norm(b)
-        if norm_a == 0 or norm_b == 0:
+        norm_a_scalar = np.linalg.norm(a)
+        norm_b_scalar = np.linalg.norm(b)
+        if norm_a_scalar == 0 or norm_b_scalar == 0:
             return 0.0
-        score = float(np.dot(a, b) / (norm_a * norm_b))
+        score = float(np.dot(a, b) / (norm_a_scalar * norm_b_scalar))
         return float(np.clip(score, -1.0, 1.0))
 
     # 1D query vs 2D gallery
     elif a.ndim == 1 and b.ndim == 2:
-        norm_a = np.linalg.norm(a)
-        norm_b = np.linalg.norm(b, axis=1)
-        if norm_a == 0:
+        norm_a_scalar = np.linalg.norm(a)
+        norm_b_vector = np.linalg.norm(b, axis=1)
+        if norm_a_scalar == 0:
             return np.zeros(len(b), dtype=np.float32)
-        norm_b = np.where(norm_b == 0, 1e-12, norm_b)
-        scores = np.dot(b, a) / (norm_b * norm_a)
+        norm_b_vector = np.where(norm_b_vector == 0, 1e-12, norm_b_vector)
+        scores = np.dot(b, a) / (norm_b_vector * norm_a_scalar)
         return np.clip(scores, -1.0, 1.0)
 
     # 2D batch vs 2D batch
     elif a.ndim == 2 and b.ndim == 2:
         if a.shape[0] != b.shape[0]:
             raise DimensionMismatchError(f"Batch sizes mismatch: {a.shape[0]} vs {b.shape[0]}")
-        norm_a = np.linalg.norm(a, axis=1)
-        norm_b = np.linalg.norm(b, axis=1)
-        norm_a = np.where(norm_a == 0, 1e-12, norm_a)
-        norm_b = np.where(norm_b == 0, 1e-12, norm_b)
-        scores = np.sum(a * b, axis=1) / (norm_a * norm_b)
+        norm_a_vector = np.linalg.norm(a, axis=1)
+        norm_b_vector = np.linalg.norm(b, axis=1)
+        norm_a_vector = np.where(norm_a_vector == 0, 1e-12, norm_a_vector)
+        norm_b_vector = np.where(norm_b_vector == 0, 1e-12, norm_b_vector)
+        scores = np.sum(a * b, axis=1) / (norm_a_vector * norm_b_vector)
         return np.clip(scores, -1.0, 1.0)
 
     else:
