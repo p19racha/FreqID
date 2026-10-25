@@ -30,6 +30,7 @@ from freqid_core.payload import PartialFacePayload
 @dataclass(frozen=True)
 class ModelInfo:
     """Metadata describing the loaded model and inference environment."""
+
     backbone: str
     backend: str
     device: str
@@ -140,7 +141,9 @@ class Embedder:
                 if unexpected:
                     raise CheckpointLoadError(f"Unexpected keys in state dict: {unexpected}")
             except RuntimeError as e:
-                raise CheckpointLoadError(f"State dict mismatch when loading {ckpt_path}: {e}") from e
+                raise CheckpointLoadError(
+                    f"State dict mismatch when loading {ckpt_path}: {e}"
+                ) from e
 
             model.to(resolved_device)
             model.eval()
@@ -198,7 +201,7 @@ class Embedder:
         is_single = False
         if isinstance(input_data, PartialFacePayload):
             arr = input_data.batch_data
-            is_single = (input_data.batch_size == 1 and input_data.shape == (27, 112, 112))
+            is_single = input_data.batch_size == 1 and input_data.shape == (27, 112, 112)
         elif isinstance(input_data, np.ndarray):
             if input_data.ndim == 3:
                 if input_data.shape != (27, 112, 112):

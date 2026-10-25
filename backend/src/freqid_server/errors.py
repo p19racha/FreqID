@@ -9,7 +9,9 @@ from __future__ import annotations
 class FreqIDServerError(Exception):
     """Base exception for all freqid-server errors."""
 
-    def __init__(self, message: str, error_code: str = "INTERNAL_SERVER_ERROR", status_code: int = 500) -> None:
+    def __init__(
+        self, message: str, error_code: str = "INTERNAL_SERVER_ERROR", status_code: int = 500
+    ) -> None:
         super().__init__(message)
         self.message = message
         self.error_code = error_code
@@ -26,14 +28,19 @@ class InvalidPayloadError(FreqIDServerError):
 class ImageDataRejectedError(FreqIDServerError):
     """Raised when spatial image bytes (JPEG, PNG, etc.) are detected in request body."""
 
-    def __init__(self, message: str = "Raw spatial image data is prohibited. Only partial frequency payloads are accepted.") -> None:
+    def __init__(
+        self,
+        message: str = "Raw spatial image data is prohibited. Only partial frequency payloads are accepted.",
+    ) -> None:
         super().__init__(message=message, error_code="IMAGE_DATA_REJECTED", status_code=400)
 
 
 class ReplayDetectedError(FreqIDServerError):
     """Raised when a request nonce has already been consumed."""
 
-    def __init__(self, message: str = "Cryptographic nonce has already been consumed or is expired.") -> None:
+    def __init__(
+        self, message: str = "Cryptographic nonce has already been consumed or is expired."
+    ) -> None:
         super().__init__(message=message, error_code="REPLAY_DETECTED", status_code=400)
 
 
@@ -82,7 +89,9 @@ class UnsupportedMediaTypeError(FreqIDServerError):
 class RateLimitExceededError(FreqIDServerError):
     """Raised when rate limit or repeated failed verification threshold is exceeded."""
 
-    def __init__(self, message: str = "Rate limit exceeded. Please back off.", retry_after: int = 5) -> None:
+    def __init__(
+        self, message: str = "Rate limit exceeded. Please back off.", retry_after: int = 5
+    ) -> None:
         super().__init__(message=message, error_code="RATE_LIMIT_EXCEEDED", status_code=429)
         self.retry_after = retry_after
 
@@ -90,7 +99,11 @@ class RateLimitExceededError(FreqIDServerError):
 class InferenceQueueFullError(FreqIDServerError):
     """Raised when the bounded inference queue is saturated."""
 
-    def __init__(self, message: str = "Inference server is at capacity. Please retry shortly.", retry_after: int = 1) -> None:
+    def __init__(
+        self,
+        message: str = "Inference server is at capacity. Please retry shortly.",
+        retry_after: int = 1,
+    ) -> None:
         super().__init__(message=message, error_code="INFERENCE_QUEUE_FULL", status_code=503)
         self.retry_after = retry_after
 
@@ -105,7 +118,9 @@ class InferenceTimeoutError(FreqIDServerError):
 class OptimisticLockError(FreqIDServerError):
     """Raised when concurrent template modification violates optimistic lock version."""
 
-    def __init__(self, message: str = "Template was modified concurrently by another transaction.") -> None:
+    def __init__(
+        self, message: str = "Template was modified concurrently by another transaction."
+    ) -> None:
         super().__init__(message=message, error_code="OPTIMISTIC_LOCK_CONFLICT", status_code=409)
 
 
@@ -119,7 +134,10 @@ class StorageError(FreqIDServerError):
 class DuplicateIdentityError(FreqIDServerError):
     """Raised when an identity is already enrolled or duplicate biometrics are detected."""
 
-    def __init__(self, message: str = "Biometric identity is already enrolled or duplicates existing identity.") -> None:
+    def __init__(
+        self,
+        message: str = "Biometric identity is already enrolled or duplicates existing identity.",
+    ) -> None:
         super().__init__(message=message, error_code="DUPLICATE_IDENTITY", status_code=409)
 
 
@@ -157,4 +175,3 @@ class AccountLockedError(FreqIDServerError):
     def __init__(self, message: str, retry_after: int = 900) -> None:
         super().__init__(message=message, error_code="ACCOUNT_LOCKED", status_code=423)
         self.retry_after = retry_after
-

@@ -47,7 +47,9 @@ class FreqIDTransport:
         self.ca_cert_path = ca_cert_path
         self.client_cert_path = client_cert_path
         self.client_key_path = client_key_path
-        self.pinned_cert_fingerprint = pinned_cert_fingerprint.lower() if pinned_cert_fingerprint else None
+        self.pinned_cert_fingerprint = (
+            pinned_cert_fingerprint.lower() if pinned_cert_fingerprint else None
+        )
         self.insecure_skip_verify = insecure_skip_verify
         self.timeout = timeout
         self.max_retries = max_retries
@@ -65,7 +67,11 @@ class FreqIDTransport:
             verify_ssl = ssl.create_default_context()
             verify_ssl.minimum_version = ssl.TLSVersion.TLSv1_2
 
-        if isinstance(verify_ssl, ssl.SSLContext) and self.client_cert_path and self.client_key_path:
+        if (
+            isinstance(verify_ssl, ssl.SSLContext)
+            and self.client_cert_path
+            and self.client_key_path
+        ):
             verify_ssl.load_cert_chain(
                 certfile=self.client_cert_path,
                 keyfile=self.client_key_path,
@@ -222,7 +228,9 @@ class FreqIDTransport:
                     if attempt < self.max_retries:
                         time.sleep(0.5 * (2 ** (attempt - 1)))
                         continue
-                    raise TransportError(f"Server error HTTP {response.status_code}: {response.text}")
+                    raise TransportError(
+                        f"Server error HTTP {response.status_code}: {response.text}"
+                    )
 
                 else:
                     raise TransportError(f"Unexpected HTTP {response.status_code}: {response.text}")
@@ -232,7 +240,9 @@ class FreqIDTransport:
                 if attempt < self.max_retries:
                     time.sleep(0.5 * (2 ** (attempt - 1)))
                     continue
-                raise TransportError(f"Network transport failed after {self.max_retries} attempts: {e}") from e
+                raise TransportError(
+                    f"Network transport failed after {self.max_retries} attempts: {e}"
+                ) from e
 
         raise TransportError(f"Request failed: {last_exception}")
 

@@ -41,7 +41,9 @@ async def test_log_redaction_during_operations(
             "X-User-ID": "audit_user",
             "Authorization": "Bearer dev_admin_token",
         }
-        res_enroll = await client.post("/v1/enroll", headers=enroll_headers, content=sample_payload_bytes)
+        res_enroll = await client.post(
+            "/v1/enroll", headers=enroll_headers, content=sample_payload_bytes
+        )
         assert res_enroll.status_code == 201
 
         # 2. Execute verification
@@ -52,7 +54,9 @@ async def test_log_redaction_during_operations(
             "X-Nonce": secrets.token_hex(16),
             "Authorization": "Bearer dev_verify_token",
         }
-        res_verify = await client.post("/v1/verify", headers=verify_headers, content=sample_payload_bytes)
+        res_verify = await client.post(
+            "/v1/verify", headers=verify_headers, content=sample_payload_bytes
+        )
         assert res_verify.status_code == 200
 
         # 3. Simulate accidental direct attempt to log raw float embedding array
@@ -60,7 +64,9 @@ async def test_log_redaction_during_operations(
         logger.info(f"Testing filter against accidental leak: {accidental_emb}")
 
         # 4. Simulate accidental direct attempt to log raw binary payload bytes
-        accidental_bytes = b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13"
+        accidental_bytes = (
+            b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13"
+        )
         logger.info(f"Testing filter against binary leak: {accidental_bytes!r}")
 
         log_content = log_stream.getvalue()

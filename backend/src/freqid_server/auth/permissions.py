@@ -5,13 +5,7 @@ permissions.py: Role-based permission matrix and FastAPI dependency enforcement.
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from typing import Final, Literal
-
-from fastapi import Depends
-
-from freqid_server.auth.base import AuthenticatedPrincipal
-from freqid_server.errors import AuthenticationError, InsufficientScopeError
 
 AdminRole = Literal["owner", "admin", "operator", "auditor"]
 

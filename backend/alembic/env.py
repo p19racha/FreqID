@@ -76,6 +76,7 @@ def run_migrations_online() -> None:
 
     if loop and loop.is_running():
         import concurrent.futures
+
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future = executor.submit(asyncio.run, run_async_migrations())
             future.result()

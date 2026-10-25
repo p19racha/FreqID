@@ -113,8 +113,19 @@ fi
 CA_CERT_FILE="${DEPLOY_DIR}/tls/certs/ca.crt"
 if [[ ! -f "$CA_CERT_FILE" ]]; then
     echo "[*] Provisioning internal Root CA for mTLS device authentication..."
-    "$PYTHON_BIN" "${REPO_ROOT}/scripts/generate_device_cert.py" init-ca --out-dir "${DEPLOY_DIR}/tls/certs"
-    echo "[+] Internal Root CA certificate and key provisioned."
+    if PYTHONPATH="${REPO_ROOT}/backend/src:${PYTHONPATH:-}" "$PYTHON_BIN" "${REPO_ROOT}/scripts/generate_device_cert.py" init-ca --out-dir "${DEPLOY_DIR}/tls/certs" 2>/dev/null; then
+        echo "[+] Internal Root CA certificate and key provisioned."
+    elif command -v docker &>/dev/null && docker image inspect freqid/server:0.1.0 &>/dev/null; then
+        docker run --rm -v "${DEPLOY_DIR}/tls/certs:/certs" -v "${REPO_ROOT}:/repo" -w /repo freqid/server:0.1.0 \
+            python3 scripts/generate_device_cert.py init-ca --out-dir /certs
+        echo "[+] Internal Root CA certificate and key provisioned via container."
+    else
+        openssl ecparam -name prime256v1 -genkey -noout -out "${DEPLOY_DIR}/tls/certs/ca.key"
+        chmod 0600 "${DEPLOY_DIR}/tls/certs/ca.key"
+        openssl req -new -x509 -key "${DEPLOY_DIR}/tls/certs/ca.key" -out "$CA_CERT_FILE" -days 3650 \
+            -subj "/C=US/O=FreqID Security Infrastructure/CN=FreqID Internal Root CA"
+        echo "[+] Internal Root CA certificate and key provisioned via openssl fallback."
+    fi
 else
     echo "[i] Existing Root CA certificate detected."
 fi

@@ -21,11 +21,13 @@ def generate_root_ca(
     """Generates an internal Root CA keypair and self-signed certificate."""
     ca_key = ec.generate_private_key(ec.SECP256R1())
 
-    subject = issuer = x509.Name([
-        x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-        x509.NameAttribute(NameOID.ORGANIZATION_NAME, "FreqID Security Infrastructure"),
-        x509.NameAttribute(NameOID.COMMON_NAME, common_name),
-    ])
+    subject = issuer = x509.Name(
+        [
+            x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "FreqID Security Infrastructure"),
+            x509.NameAttribute(NameOID.COMMON_NAME, common_name),
+        ]
+    )
 
     now = datetime.datetime.now(datetime.timezone.utc)
     ca_cert = (
@@ -72,11 +74,13 @@ def issue_device_certificate(
     """Issues an edge device client authentication certificate signed by the Root CA."""
     device_key = ec.generate_private_key(ec.SECP256R1())
 
-    subject = x509.Name([
-        x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-        x509.NameAttribute(NameOID.ORGANIZATION_NAME, "FreqID Edge Network"),
-        x509.NameAttribute(NameOID.COMMON_NAME, device_id),
-    ])
+    subject = x509.Name(
+        [
+            x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "FreqID Edge Network"),
+            x509.NameAttribute(NameOID.COMMON_NAME, device_id),
+        ]
+    )
 
     now = datetime.datetime.now(datetime.timezone.utc)
     device_cert = (
@@ -170,11 +174,13 @@ def issue_server_certificate(
     """Issues a server TLS certificate signed by the Root CA."""
     server_key = ec.generate_private_key(ec.SECP256R1())
 
-    subject = x509.Name([
-        x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-        x509.NameAttribute(NameOID.ORGANIZATION_NAME, "FreqID Infrastructure"),
-        x509.NameAttribute(NameOID.COMMON_NAME, hostname),
-    ])
+    subject = x509.Name(
+        [
+            x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "FreqID Infrastructure"),
+            x509.NameAttribute(NameOID.COMMON_NAME, hostname),
+        ]
+    )
 
     now = datetime.datetime.now(datetime.timezone.utc)
     if expired:
@@ -187,6 +193,7 @@ def issue_server_certificate(
     sans: list[x509.GeneralName] = [x509.DNSName(hostname)]
     if ip_addresses:
         import ipaddress
+
         for ip in ip_addresses:
             sans.append(x509.IPAddress(ipaddress.ip_address(ip)))
 

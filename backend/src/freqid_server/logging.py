@@ -93,4 +93,3 @@ def configure_logging(config: Any = None) -> logging.Logger:
 
 
 logger = setup_logging()
-

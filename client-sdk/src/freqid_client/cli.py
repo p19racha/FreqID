@@ -18,7 +18,6 @@ from pathlib import Path
 import httpx
 
 from freqid_client.auth import (
-    DeviceSignatureAuthenticator,
     NoAuth,
     StaticTokenAuthenticator,
     load_device_credentials,
@@ -49,12 +48,16 @@ def cmd_check(args: argparse.Namespace, cfg: ClientConfig) -> int:
 
     # 3. Camera check
     try:
-        cam = WebcamSource(camera_index=cfg.camera_index, width=cfg.camera_width, height=cfg.camera_height)
+        cam = WebcamSource(
+            camera_index=cfg.camera_index, width=cfg.camera_width, height=cfg.camera_height
+        )
         cam.open()
         frame = cam.read_frame()
         cam.release()
         if frame is not None:
-            print(f"[PASS] Camera: Accessible (Index {cfg.camera_index}, Frame shape {frame.shape})")
+            print(
+                f"[PASS] Camera: Accessible (Index {cfg.camera_index}, Frame shape {frame.shape})"
+            )
         else:
             print(f"[WARN] Camera: Opened but returned empty frame (Index {cfg.camera_index})")
     except Exception as e:  # noqa: BLE001
@@ -64,7 +67,9 @@ def cmd_check(args: argparse.Namespace, cfg: ClientConfig) -> int:
     try:
         r = httpx.get(f"{cfg.server_url}/health", timeout=3.0)
         if r.status_code == 200:
-            print(f"[PASS] Server Connectivity: Reachable ({cfg.server_url} - HTTP {r.status_code})")
+            print(
+                f"[PASS] Server Connectivity: Reachable ({cfg.server_url} - HTTP {r.status_code})"
+            )
         else:
             print(f"[WARN] Server Connectivity: Returned status HTTP {r.status_code}")
     except Exception as e:  # noqa: BLE001
@@ -76,7 +81,9 @@ def cmd_check(args: argparse.Namespace, cfg: ClientConfig) -> int:
 
 def cmd_capture(args: argparse.Namespace, cfg: ClientConfig) -> int:
     pipeline = ClientPipeline(config=cfg)
-    cam = WebcamSource(camera_index=cfg.camera_index, width=cfg.camera_width, height=cfg.camera_height)
+    cam = WebcamSource(
+        camera_index=cfg.camera_index, width=cfg.camera_width, height=cfg.camera_height
+    )
 
     print("[*] Opening camera to capture single face payload...")
     with cam:
@@ -108,7 +115,9 @@ def cmd_verify(args: argparse.Namespace, cfg: ClientConfig) -> int:
         ca_cert_path=cfg.ca_cert_path,
         insecure_skip_verify=cfg.insecure_skip_verify,
     )
-    cam = WebcamSource(camera_index=cfg.camera_index, width=cfg.camera_width, height=cfg.camera_height)
+    cam = WebcamSource(
+        camera_index=cfg.camera_index, width=cfg.camera_width, height=cfg.camera_height
+    )
 
     print(f"[*] Capturing frame for verification against user '{args.user_id}'...")
     with cam:
@@ -132,7 +141,9 @@ def cmd_verify(args: argparse.Namespace, cfg: ClientConfig) -> int:
     print("\n=== Verification Result ===")
     print(f"Claimed Identity: {args.user_id}")
     print(f"Cosine Score:     {sim:.4f} (Threshold: {thresh:.4f})")
-    print(f"Decision:         {'VERIFIED (Access Granted)' if is_match else 'REJECTED (Access Denied)'}")
+    print(
+        f"Decision:         {'VERIFIED (Access Granted)' if is_match else 'REJECTED (Access Denied)'}"
+    )
     return 0 if is_match else 1
 
 
@@ -147,7 +158,9 @@ def cmd_enroll(args: argparse.Namespace, cfg: ClientConfig) -> int:
         ca_cert_path=cfg.ca_cert_path,
         insecure_skip_verify=cfg.insecure_skip_verify,
     )
-    cam = WebcamSource(camera_index=cfg.camera_index, width=cfg.camera_width, height=cfg.camera_height)
+    cam = WebcamSource(
+        camera_index=cfg.camera_index, width=cfg.camera_width, height=cfg.camera_height
+    )
 
     def _on_progress(p: EnrollmentProgress) -> None:
         print(f"[{p.status}] ({p.frames_captured}/{p.target_frames}): {p.prompt_message}")
@@ -158,12 +171,14 @@ def cmd_enroll(args: argparse.Namespace, cfg: ClientConfig) -> int:
 
     print(f"\n[*] Submitting {len(payloads)} enrollment frames to {cfg.server_url}...")
     res = transport.enroll(payload_bytes_list=payloads, user_id=args.user_id)
-    print(f"[SUCCESS] User '{args.user_id}' successfully enrolled (Template ID: {res.get('template_id')})")
+    print(
+        f"[SUCCESS] User '{args.user_id}' successfully enrolled (Template ID: {res.get('template_id')})"
+    )
     return 0
 
 
 def cmd_pair(args: argparse.Namespace, cfg: ClientConfig) -> int:
-    print(f"=== Pairing Edge Device with FreqID Server ===")
+    print("=== Pairing Edge Device with FreqID Server ===")
     print(f"[*] Target Server: {args.server}")
     print(f"[*] Device Name:   {args.name}")
 
@@ -233,16 +248,28 @@ def main() -> None:
 
     # pair
     p_pair = subparsers.add_parser("pair", help="Pair device with server using single-use token")
-    p_pair.add_argument("--server", "-s", required=True, help="FreqID server URL (e.g. https://server:8000)")
+    p_pair.add_argument(
+        "--server", "-s", required=True, help="FreqID server URL (e.g. https://server:8000)"
+    )
     p_pair.add_argument("--token", "-t", required=True, help="Single-use pairing token")
     p_pair.add_argument("--name", "-n", default="Edge Camera", help="Device name")
-    p_pair.add_argument("--credentials", default="~/.freqid/device_credentials.json", help="Path to credentials file")
-    p_pair.add_argument("--insecure-skip-verify", action="store_true", help="Skip TLS verification (dev only)")
+    p_pair.add_argument(
+        "--credentials",
+        default="~/.freqid/device_credentials.json",
+        help="Path to credentials file",
+    )
+    p_pair.add_argument(
+        "--insecure-skip-verify", action="store_true", help="Skip TLS verification (dev only)"
+    )
     p_pair.add_argument("--ca-cert", default=None, help="Path to CA certificate")
 
     # status
     p_stat = subparsers.add_parser("status", help="Show device pairing state and reachability")
-    p_stat.add_argument("--credentials", default="~/.freqid/device_credentials.json", help="Path to credentials file")
+    p_stat.add_argument(
+        "--credentials",
+        default="~/.freqid/device_credentials.json",
+        help="Path to credentials file",
+    )
 
     # capture
     p_cap = subparsers.add_parser("capture", help="Capture single face and write payload to file")
@@ -255,7 +282,9 @@ def main() -> None:
     # enroll
     p_enr = subparsers.add_parser("enroll", help="Guided multi-capture enrollment")
     p_enr.add_argument("--user-id", "-u", required=True, help="User ID to enroll")
-    p_enr.add_argument("--frames", "-f", type=int, default=5, help="Number of frames to capture (default: 5)")
+    p_enr.add_argument(
+        "--frames", "-f", type=int, default=5, help="Number of frames to capture (default: 5)"
+    )
 
     args = parser.parse_args()
 

@@ -31,7 +31,11 @@ async def run_retention(db_url: str, retention_days: int, dry_run: bool) -> int:
 
     async with session_factory() as session:
         # 1. Count eligible records
-        count_stmt = select(func.count()).select_from(AuditEventOrm).where(AuditEventOrm.event_time < cutoff_time)
+        count_stmt = (
+            select(func.count())
+            .select_from(AuditEventOrm)
+            .where(AuditEventOrm.event_time < cutoff_time)
+        )
         res_count = await session.execute(count_stmt)
         eligible_count = int(res_count.scalar_one())
 
@@ -54,8 +58,12 @@ async def run_retention(db_url: str, retention_days: int, dry_run: bool) -> int:
 
 def main():
     parser = argparse.ArgumentParser(description="Audit Retention Pruner")
-    parser.add_argument("--days", type=int, default=90, help="Retention period in days (default: 90)")
-    parser.add_argument("--dry-run", action="store_true", help="Report eligible records without deleting")
+    parser.add_argument(
+        "--days", type=int, default=90, help="Retention period in days (default: 90)"
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Report eligible records without deleting"
+    )
     parser.add_argument(
         "--db-url",
         type=str,

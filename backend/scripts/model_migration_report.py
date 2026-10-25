@@ -31,9 +31,8 @@ async def generate_report(db_url: str, active_model_version: str):
 
     async with session_factory() as session:
         # Group by model version
-        stmt = (
-            select(TemplateOrm.model_version, func.count(TemplateOrm.id))
-            .group_by(TemplateOrm.model_version)
+        stmt = select(TemplateOrm.model_version, func.count(TemplateOrm.id)).group_by(
+            TemplateOrm.model_version
         )
         res = await session.execute(stmt)
         breakdown = dict(res.all())
@@ -48,7 +47,9 @@ async def generate_report(db_url: str, active_model_version: str):
         print("-" * 70)
         print("Model Version Breakdown:")
         for m_ver, count in breakdown.items():
-            status_flag = "ACTIVE" if m_ver == active_model_version else "OUTDATED (RE-ENROLL REQUIRED)"
+            status_flag = (
+                "ACTIVE" if m_ver == active_model_version else "OUTDATED (RE-ENROLL REQUIRED)"
+            )
             print(f"  - {m_ver:<20}: {count:>6} templates [{status_flag}]")
         print("=" * 70)
 

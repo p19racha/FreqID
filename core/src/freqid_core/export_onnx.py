@@ -17,6 +17,7 @@ from torch import nn
 try:
     import onnx
     import onnxruntime as ort
+
     HAS_ONNX = True
 except ImportError:
     HAS_ONNX = False

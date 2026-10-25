@@ -5,10 +5,7 @@ test_score_leakage.py: Tests for decision-only output, score quantization/noise,
 
 from __future__ import annotations
 
-import time
-
 import numpy as np
-import pytest
 
 from freqid_server.services.anomaly_detector import NearThresholdAnomalyDetector
 from freqid_server.services.matching import MatchingService

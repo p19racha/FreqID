@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 
 class VerifyResponse(BaseModel):
     """Result of 1:1 biometric verification."""
+
     status: str = Field(default="success")
     request_id: str
     is_match: bool
@@ -24,6 +25,7 @@ class VerifyResponse(BaseModel):
 
 class CandidateMatch(BaseModel):
     """Candidate match record in 1:N biometric identification."""
+
     user_id: str
     similarity: float | None = None
     rank: int
@@ -32,6 +34,7 @@ class CandidateMatch(BaseModel):
 
 class IdentifyResponse(BaseModel):
     """Result of 1:N biometric identification."""
+
     status: str = Field(default="success")
     request_id: str
     is_match: bool
@@ -41,6 +44,7 @@ class IdentifyResponse(BaseModel):
 
 class EnrollResponse(BaseModel):
     """Result of multi-frame biometric enrollment."""
+
     status: str = Field(default="enrolled")
     user_id: str
     template_id: str
@@ -53,6 +57,7 @@ class EnrollResponse(BaseModel):
 
 class UserStatusResponse(BaseModel):
     """Result of user activation or deactivation."""
+
     status: str
     user_id: str
     message: str
@@ -60,6 +65,7 @@ class UserStatusResponse(BaseModel):
 
 class UserExportResponse(BaseModel):
     """Export of user profile, template metadata, and audit events (never plaintext biometrics)."""
+
     user_id: str
     status: str
     created_at: str
@@ -70,6 +76,7 @@ class UserExportResponse(BaseModel):
 
 class ModelMigrationReportResponse(BaseModel):
     """Report on templates requiring re-enrollment across model versions."""
+
     active_model_version: str
     total_templates: int
     compatible_templates: int
@@ -79,6 +86,7 @@ class ModelMigrationReportResponse(BaseModel):
 
 class DeleteResponse(BaseModel):
     """Result of identity template deletion."""
+
     status: str = Field(default="deleted")
     user_id: str
     message: str
@@ -86,6 +94,7 @@ class DeleteResponse(BaseModel):
 
 class ModelInfoResponse(BaseModel):
     """Public non-sensitive metadata for active server model."""
+
     model_version: str
     backend: str
     device: str
@@ -96,12 +105,14 @@ class ModelInfoResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     """Liveness probe response."""
+
     status: str = "ok"
     service: str = "freqid-server"
 
 
 class ReadyResponse(BaseModel):
     """Readiness probe response."""
+
     status: str = "ready"
     model_loaded: bool
     model_version: str
@@ -113,6 +124,7 @@ class ReadyResponse(BaseModel):
 
 class ErrorDetail(BaseModel):
     """Machine-readable error envelope."""
+
     code: str
     message: str
     request_id: str
@@ -120,12 +132,14 @@ class ErrorDetail(BaseModel):
 
 class ErrorResponse(BaseModel):
     """Standardized error response."""
+
     error: ErrorDetail
 
 
 # -------------------------------------------------------------------------
 # Phase 6 Admin and Device Schemas
 # -------------------------------------------------------------------------
+
 
 class AdminLoginRequest(BaseModel):
     username: str

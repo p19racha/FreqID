@@ -101,7 +101,9 @@ async def metrics_endpoint(request: Request) -> PlainTextResponse:
         "# TYPE freqid_enrolled_identities gauge",
         f"freqid_enrolled_identities {gallery_count}",
     ]
-    return PlainTextResponse("\n".join(lines) + "\n", media_type="text/plain; version=0.0.4; charset=utf-8")
+    return PlainTextResponse(
+        "\n".join(lines) + "\n", media_type="text/plain; version=0.0.4; charset=utf-8"
+    )
 
 
 @router.get(

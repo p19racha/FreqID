@@ -38,5 +38,7 @@ sys.exit(0)
         check=False,
     )
 
-    assert result.returncode == 0, f"Isolation test failed:\nStdout: {result.stdout}\nStderr: {result.stderr}"
+    assert result.returncode == 0, (
+        f"Isolation test failed:\nStdout: {result.stdout}\nStderr: {result.stderr}"
+    )
     assert "PASSED" in result.stdout

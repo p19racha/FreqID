@@ -71,15 +71,30 @@ async def verify_endpoint(
     x_claimed_identity: str | None = Header(None, alias="X-Claimed-Identity"),
 ) -> JSONResponse:
     if not x_device_id:
-        raise HTTPException(status_code=400, detail={"error_code": "MISSING_HEADER", "message": "X-Device-ID header is required"})
+        raise HTTPException(
+            status_code=400,
+            detail={"error_code": "MISSING_HEADER", "message": "X-Device-ID header is required"},
+        )
     if not x_claimed_identity:
-        raise HTTPException(status_code=400, detail={"error_code": "MISSING_HEADER", "message": "X-Claimed-Identity header is required"})
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error_code": "MISSING_HEADER",
+                "message": "X-Claimed-Identity header is required",
+            },
+        )
     if not x_nonce:
-        raise HTTPException(status_code=400, detail={"error_code": "MISSING_HEADER", "message": "X-Nonce header is required"})
+        raise HTTPException(
+            status_code=400,
+            detail={"error_code": "MISSING_HEADER", "message": "X-Nonce header is required"},
+        )
 
     # Replay protection check
     if x_nonce in SEEN_NONCES:
-        raise HTTPException(status_code=400, detail={"error_code": "REPLAY_DETECTED", "message": "Nonce has already been consumed"})
+        raise HTTPException(
+            status_code=400,
+            detail={"error_code": "REPLAY_DETECTED", "message": "Nonce has already been consumed"},
+        )
     SEEN_NONCES.add(x_nonce)
 
     body = await request.body()
@@ -136,17 +151,24 @@ async def identify_endpoint(
     x_top_k: int = Header(5, alias="X-Top-K"),
 ) -> JSONResponse:
     if not x_device_id or not x_nonce:
-        raise HTTPException(status_code=400, detail={"error_code": "MISSING_HEADER", "message": "Required headers missing"})
+        raise HTTPException(
+            status_code=400,
+            detail={"error_code": "MISSING_HEADER", "message": "Required headers missing"},
+        )
 
     if x_nonce in SEEN_NONCES:
-        raise HTTPException(status_code=400, detail={"error_code": "REPLAY_DETECTED", "message": "Nonce consumed"})
+        raise HTTPException(
+            status_code=400, detail={"error_code": "REPLAY_DETECTED", "message": "Nonce consumed"}
+        )
     SEEN_NONCES.add(x_nonce)
 
     body = await request.body()
     try:
         payload = fq.PartialFacePayload.from_bytes(body)
     except Exception as e:  # noqa: BLE001
-        raise HTTPException(status_code=400, detail={"error_code": "INVALID_PAYLOAD", "message": str(e)})
+        raise HTTPException(
+            status_code=400, detail={"error_code": "INVALID_PAYLOAD", "message": str(e)}
+        )
 
     embedder = get_embedder()
     if embedder is not None:
@@ -172,7 +194,12 @@ async def identify_endpoint(
 
     results = fq.identify(emb, gallery_embs, gallery_ids, threshold=0.35, top_k=x_top_k)
     candidates = [
-        {"user_id": r.target_id, "similarity": float(r.similarity), "rank": r.rank, "is_match": r.is_match}
+        {
+            "user_id": r.target_id,
+            "similarity": float(r.similarity),
+            "rank": r.rank,
+            "is_match": r.is_match,
+        }
         for r in results
     ]
     top_candidate = candidates[0] if candidates and candidates[0]["is_match"] else None
@@ -198,7 +225,10 @@ async def enroll_endpoint(
     x_payload_count: str | None = Header(None, alias="X-Payload-Count"),
 ) -> JSONResponse:
     if not x_device_id or not x_user_id:
-        raise HTTPException(status_code=400, detail={"error_code": "MISSING_HEADER", "message": "Required headers missing"})
+        raise HTTPException(
+            status_code=400,
+            detail={"error_code": "MISSING_HEADER", "message": "Required headers missing"},
+        )
 
     body = await request.body()
     # Parse framed payloads: 4-byte length prefix
@@ -214,7 +244,10 @@ async def enroll_endpoint(
         payloads.append(fq.PartialFacePayload.from_bytes(p_bytes))
 
     if not payloads:
-        raise HTTPException(status_code=400, detail={"error_code": "EMPTY_PAYLOADS", "message": "No valid payloads received"})
+        raise HTTPException(
+            status_code=400,
+            detail={"error_code": "EMPTY_PAYLOADS", "message": "No valid payloads received"},
+        )
 
     embedder = get_embedder()
     embs = []

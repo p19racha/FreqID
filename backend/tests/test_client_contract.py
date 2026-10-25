@@ -46,7 +46,9 @@ def live_server_url():
     app = create_app(config=cfg, store=MemoryTemplateStore())
     app.state.inference.start()
 
-    server_config = uvicorn.Config(app=app, host="127.0.0.1", port=port, log_level="warning", loop="asyncio")
+    server_config = uvicorn.Config(
+        app=app, host="127.0.0.1", port=port, log_level="warning", loop="asyncio"
+    )
     server = uvicorn.Server(server_config)
 
     thread = threading.Thread(target=server.run, daemon=True)
@@ -93,8 +95,12 @@ def test_client_transport_e2e(live_server_url: str):
     # Generate 3 similar payloads (perturbed slightly to test multi-sample averaging)
     base_data = rng.randn(27, 112, 112).astype(np.float32)
     payload1 = fq.PartialFacePayload(data=base_data)
-    payload2 = fq.PartialFacePayload(data=base_data + rng.randn(27, 112, 112).astype(np.float32) * 0.01)
-    payload3 = fq.PartialFacePayload(data=base_data + rng.randn(27, 112, 112).astype(np.float32) * 0.01)
+    payload2 = fq.PartialFacePayload(
+        data=base_data + rng.randn(27, 112, 112).astype(np.float32) * 0.01
+    )
+    payload3 = fq.PartialFacePayload(
+        data=base_data + rng.randn(27, 112, 112).astype(np.float32) * 0.01
+    )
 
     payload_bytes_list = [payload1.to_bytes(), payload2.to_bytes(), payload3.to_bytes()]
     user_id = "test_e2e_user"
@@ -162,7 +168,9 @@ def test_client_postgres_persistence_across_server_restart():
     async def clean_db():
         eng = create_async_engine(admin_db_url, echo=False)
         async with eng.begin() as conn:
-            await conn.execute(text("TRUNCATE TABLE audit_events, templates, enrollment_sessions, users CASCADE;"))
+            await conn.execute(
+                text("TRUNCATE TABLE audit_events, templates, enrollment_sessions, users CASCADE;")
+            )
         await eng.dispose()
 
     asyncio.run(clean_db())
@@ -272,4 +280,3 @@ def test_client_postgres_persistence_across_server_restart():
     transport2.close()
     server2.should_exit = True
     t2.join(timeout=3.0)
-

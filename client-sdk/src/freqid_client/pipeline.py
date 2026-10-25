@@ -26,6 +26,7 @@ from freqid_client.quality import QualityGate, QualityReport
 @dataclass(frozen=True)
 class PipelineTimings:
     """Detailed latency metrics (in milliseconds) for each edge processing stage."""
+
     detect_ms: float
     align_ms: float
     quality_ms: float
@@ -37,6 +38,7 @@ class PipelineTimings:
 @dataclass(frozen=True)
 class PipelineResult:
     """The outcome of processing a single camera frame through the edge pipeline."""
+
     success: bool
     payload_bytes: bytes | None
     quality_report: QualityReport
@@ -195,7 +197,9 @@ class ClientPipeline:
         if self.config.debug_save_dir:
             debug_path = Path(self.config.debug_save_dir)
             debug_path.mkdir(parents=True, exist_ok=True)
-            cv2.imwrite(str(debug_path / f"debug_aligned_{int(time.time() * 1000)}.png"), aligned_bgr)
+            cv2.imwrite(
+                str(debug_path / f"debug_aligned_{int(time.time() * 1000)}.png"), aligned_bgr
+            )
 
         # 4. Frequency Domain Transformation (Pure-NumPy engine, zero torch dependency)
         t0 = time.perf_counter()

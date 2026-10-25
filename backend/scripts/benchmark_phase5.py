@@ -50,11 +50,15 @@ KEY_V2 = b"abcdefghijklmnopqrstuvwxyz012345"
 async def clean_database():
     admin_engine = create_async_engine(ADMIN_DB_URL, echo=False)
     async with admin_engine.begin() as conn:
-        await conn.execute(text("TRUNCATE TABLE audit_events, templates, enrollment_sessions, users CASCADE;"))
+        await conn.execute(
+            text("TRUNCATE TABLE audit_events, templates, enrollment_sessions, users CASCADE;")
+        )
     await admin_engine.dispose()
 
 
-async def seed_synthetic_templates(count: int, key_id: str = "key_v1") -> tuple[list[str], list[str]]:
+async def seed_synthetic_templates(
+    count: int, key_id: str = "key_v1"
+) -> tuple[list[str], list[str]]:
     """Seeds N encrypted templates directly into PostgreSQL."""
     admin_engine = create_async_engine(ADMIN_DB_URL, echo=False)
     session_factory = async_sessionmaker(admin_engine, expire_on_commit=False)
@@ -120,7 +124,9 @@ async def benchmark_gallery_ingestion_and_decryption(count: int):
         secondary_keys={"key_v2": KEY_V2},
     )
     encryptor = TemplateEncryptor(provider)
-    store = PostgreSQLTemplateStore(session_factory=session_factory, encryptor=encryptor, batch_size=1000)
+    store = PostgreSQLTemplateStore(
+        session_factory=session_factory, encryptor=encryptor, batch_size=1000
+    )
     gallery = GalleryIndex()
 
     t0 = time.perf_counter()
@@ -181,7 +187,9 @@ async def benchmark_key_rotation(count: int, blob_hashes_before: list[str]):
 
 async def benchmark_verification_latency(num_requests: int = 100):
     """Measures 1:1 verify latency with PostgreSQL template fetch and async audit logging."""
-    print(f"\n--- Benchmark 3: Verification Latency with PostgreSQL & Async Audit ({num_requests} ops) ---")
+    print(
+        f"\n--- Benchmark 3: Verification Latency with PostgreSQL & Async Audit ({num_requests} ops) ---"
+    )
     app_engine = create_async_engine(DEV_DB_URL, echo=False)
     session_factory = async_sessionmaker(app_engine, expire_on_commit=False)
     provider = EnvOrFileKeyProvider(

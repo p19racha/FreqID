@@ -10,7 +10,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from fastapi import APIRouter, Cookie, Depends, Header, Request, Response
+from fastapi import APIRouter, Cookie, Depends, Request, Response
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -30,9 +30,6 @@ from freqid_server.auth.tokens import (
     hash_token,
 )
 from freqid_server.auth.totp import (
-    generate_recovery_codes,
-    generate_totp_secret,
-    get_totp_uri,
     verify_totp_code,
 )
 from freqid_server.errors import (

@@ -92,7 +92,12 @@ class InferenceService:
 
         Validates queue capacity, runs inference off-thread, and enforces timeout budget.
         """
-        if not self.is_ready or self._embedder is None or self._pool is None or self._queue_semaphore is None:
+        if (
+            not self.is_ready
+            or self._embedder is None
+            or self._pool is None
+            or self._queue_semaphore is None
+        ):
             raise RuntimeError("Inference service is not initialized or ready.")
 
         # Check payload metadata compatibility

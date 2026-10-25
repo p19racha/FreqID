@@ -143,7 +143,7 @@ class DeviceSignatureAuthenticator(Authenticator):
             body = body.encode("utf-8")
 
         body_digest = hashlib.sha256(body).hexdigest()
-        canonical = f"{method}\n{path}\n{timestamp}\n{nonce}\n{body_digest}".encode("utf-8")
+        canonical = f"{method}\n{path}\n{timestamp}\n{nonce}\n{body_digest}".encode()
 
         sig = self._private_key.sign(canonical)
         sig_b64 = base64.b64encode(sig).decode("ascii")

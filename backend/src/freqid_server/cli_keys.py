@@ -38,7 +38,9 @@ def cmd_generate(args: argparse.Namespace) -> None:
         print("[*] Generated 256-bit Master Key (AES-256 / HKDF root):")
         print(f"    Base64: {b64_key}")
         print(f"    Hex:    {hex_key}")
-        print("\n[!] WARNING: Keep this key strictly confidential. Store in environment variable or 0600 file.")
+        print(
+            "\n[!] WARNING: Keep this key strictly confidential. Store in environment variable or 0600 file."
+        )
 
 
 def _read_master_key(args: argparse.Namespace) -> bytes:
@@ -74,7 +76,9 @@ def cmd_split(args: argparse.Namespace) -> None:
         print("Error: Threshold (-k) must be at least 2", file=sys.stderr)
         sys.exit(1)
     if threshold > shares:
-        print(f"Error: Threshold ({threshold}) cannot exceed total shares ({shares})", file=sys.stderr)
+        print(
+            f"Error: Threshold ({threshold}) cannot exceed total shares ({shares})", file=sys.stderr
+        )
         sys.exit(1)
 
     # SLIP-0039 Shamir Secret Sharing
@@ -186,15 +190,23 @@ def main() -> None:
     subparsers = parser.add_subparsers(dest="subcommand", required=True)
 
     # generate
-    p_gen = subparsers.add_parser("generate", help="Generate a fresh cryptographically random 256-bit master key")
+    p_gen = subparsers.add_parser(
+        "generate", help="Generate a fresh cryptographically random 256-bit master key"
+    )
     p_gen.add_argument("--out", "-o", help="Path to write master key file with 0600 permissions")
 
     # split
-    p_split = subparsers.add_parser("split", help="Split master key into K-of-N Shamir secret shares (SLIP-0039)")
+    p_split = subparsers.add_parser(
+        "split", help="Split master key into K-of-N Shamir secret shares (SLIP-0039)"
+    )
     p_split.add_argument("--key", help="Raw master key in Base64 or Hex")
     p_split.add_argument("--key-file", "-f", help="Path to master key file")
-    p_split.add_argument("-k", "--threshold", type=int, default=3, help="Recovery threshold K (default: 3)")
-    p_split.add_argument("-n", "--shares", type=int, default=5, help="Total number of shares N (default: 5)")
+    p_split.add_argument(
+        "-k", "--threshold", type=int, default=3, help="Recovery threshold K (default: 3)"
+    )
+    p_split.add_argument(
+        "-n", "--shares", type=int, default=5, help="Total number of shares N (default: 5)"
+    )
 
     # combine
     p_comb = subparsers.add_parser("combine", help="Combine K shares to reconstruct master key")

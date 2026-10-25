@@ -107,6 +107,7 @@ def pki_fixtures() -> dict[str, str]:
     )
     srv_pem, srv_key_pem = export_pem(srv_cert, srv_key)
     from cryptography.hazmat.primitives import serialization
+
     srv_der = srv_cert.public_bytes(serialization.Encoding.DER)
     srv_fingerprint = hashlib.sha256(srv_der).hexdigest()
 
@@ -146,9 +147,7 @@ def pki_fixtures() -> dict[str, str]:
     }
 
 
-def test_tls_connection_success_with_valid_ca(
-    tmp_path: Path, pki_fixtures: dict[str, str]
-) -> None:
+def test_tls_connection_success_with_valid_ca(tmp_path: Path, pki_fixtures: dict[str, str]) -> None:
     """Verifies that client securely connects when presented with a valid certificate signed by trusted CA."""
     server = MockTLSServer(
         server_cert_pem=pki_fixtures["srv_pem"],
@@ -171,9 +170,7 @@ def test_tls_connection_success_with_valid_ca(
         server.stop()
 
 
-def test_tls_rejects_wrong_ca(
-    tmp_path: Path, pki_fixtures: dict[str, str]
-) -> None:
+def test_tls_rejects_wrong_ca(tmp_path: Path, pki_fixtures: dict[str, str]) -> None:
     """Verifies that client rejects connections signed by an untrusted / rogue CA."""
     server = MockTLSServer(
         server_cert_pem=pki_fixtures["srv_pem"],
@@ -194,14 +191,15 @@ def test_tls_rejects_wrong_ca(
         ) as transport:
             with pytest.raises(TransportError) as exc_info:
                 transport.verify(payload_bytes=b"PF01_dummy", claimed_identity="user-01")
-            assert "certificate" in str(exc_info.value).lower() or "failed" in str(exc_info.value).lower()
+            assert (
+                "certificate" in str(exc_info.value).lower()
+                or "failed" in str(exc_info.value).lower()
+            )
     finally:
         server.stop()
 
 
-def test_tls_rejects_expired_certificate(
-    tmp_path: Path, pki_fixtures: dict[str, str]
-) -> None:
+def test_tls_rejects_expired_certificate(tmp_path: Path, pki_fixtures: dict[str, str]) -> None:
     """Verifies that client refuses connection to a server presenting an expired certificate."""
     server = MockTLSServer(
         server_cert_pem=pki_fixtures["exp_pem"],
@@ -213,20 +211,21 @@ def test_tls_rejects_expired_certificate(
     ca_file.write_text(pki_fixtures["ca_pem"])
 
     try:
-        with FreqIDTransport(
-            server_url=server_url,
-            device_id="dev-01",
-            ca_cert_path=str(ca_file),
-            max_retries=1,
-        ) as transport, pytest.raises(TransportError):
+        with (
+            FreqIDTransport(
+                server_url=server_url,
+                device_id="dev-01",
+                ca_cert_path=str(ca_file),
+                max_retries=1,
+            ) as transport,
+            pytest.raises(TransportError),
+        ):
             transport.verify(payload_bytes=b"PF01_dummy", claimed_identity="user-01")
     finally:
         server.stop()
 
 
-def test_tls_rejects_hostname_mismatch(
-    tmp_path: Path, pki_fixtures: dict[str, str]
-) -> None:
+def test_tls_rejects_hostname_mismatch(tmp_path: Path, pki_fixtures: dict[str, str]) -> None:
     """Verifies that client refuses connection if certificate CommonName / SAN does not match 127.0.0.1."""
     server = MockTLSServer(
         server_cert_pem=pki_fixtures["mismatch_pem"],
@@ -238,12 +237,15 @@ def test_tls_rejects_hostname_mismatch(
     ca_file.write_text(pki_fixtures["ca_pem"])
 
     try:
-        with FreqIDTransport(
-            server_url=server_url,
-            device_id="dev-01",
-            ca_cert_path=str(ca_file),
-            max_retries=1,
-        ) as transport, pytest.raises(TransportError):
+        with (
+            FreqIDTransport(
+                server_url=server_url,
+                device_id="dev-01",
+                ca_cert_path=str(ca_file),
+                max_retries=1,
+            ) as transport,
+            pytest.raises(TransportError),
+        ):
             transport.verify(payload_bytes=b"PF01_dummy", claimed_identity="user-01")
     finally:
         server.stop()
@@ -283,9 +285,7 @@ def test_tls_rejects_downgrade_to_tls10_or_tls11(
         server.stop()
 
 
-def test_certificate_pinning_verification(
-    tmp_path: Path, pki_fixtures: dict[str, str]
-) -> None:
+def test_certificate_pinning_verification(tmp_path: Path, pki_fixtures: dict[str, str]) -> None:
     """Verifies that certificate pinning succeeds on matching fingerprint and aborts on pin mismatch."""
     server = MockTLSServer(
         server_cert_pem=pki_fixtures["srv_pem"],
@@ -356,12 +356,15 @@ def test_mtls_client_certificate_authentication(
             assert res.get("decision") == "authenticated"
 
         # 2. Connecting WITHOUT client certificate -> Handshake failure by server
-        with FreqIDTransport(
-            server_url=server_url,
-            device_id="dev-no-cert",
-            ca_cert_path=str(ca_file),
-            max_retries=1,
-        ) as transport_no_cert, pytest.raises(TransportError):
+        with (
+            FreqIDTransport(
+                server_url=server_url,
+                device_id="dev-no-cert",
+                ca_cert_path=str(ca_file),
+                max_retries=1,
+            ) as transport_no_cert,
+            pytest.raises(TransportError),
+        ):
             transport_no_cert.verify(payload_bytes=b"PF01_dummy", claimed_identity="user-01")
     finally:
         server.stop()

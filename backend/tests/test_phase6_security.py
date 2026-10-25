@@ -32,7 +32,7 @@ import pytest
 import pytest_asyncio
 from cryptography.hazmat.primitives.asymmetric import ed25519
 from sqlalchemy import select, text
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from freqid_server.audit.postgres import PostgresAuditSink
 from freqid_server.auth.passwords import hash_password
@@ -42,13 +42,8 @@ from freqid_server.crypto.envelope import TemplateEncryptor
 from freqid_server.crypto.provider import EnvOrFileKeyProvider
 from freqid_server.main import create_app
 from freqid_server.storage.models import (
-    AdminRefreshTokenOrm,
     AdminUserOrm,
-    DeviceOrm,
     PairingTokenOrm,
-    SystemSettingOrm,
-    TemplateOrm,
-    UserOrm,
 )
 from freqid_server.storage.postgres import PostgreSQLTemplateStore
 
@@ -67,18 +62,22 @@ TEST_MASTER_KEY = b"01234567890123456789012345678901"
 async def clean_db():
     admin_engine = create_async_engine(ADMIN_DB_URL, echo=False)
     async with admin_engine.begin() as conn:
-        await conn.execute(text(
-            "TRUNCATE TABLE audit_events, templates, enrollment_sessions, users, "
-            "device_heartbeats, devices, pairing_tokens, admin_refresh_tokens, "
-            "admin_users, system_settings CASCADE;"
-        ))
+        await conn.execute(
+            text(
+                "TRUNCATE TABLE audit_events, templates, enrollment_sessions, users, "
+                "device_heartbeats, devices, pairing_tokens, admin_refresh_tokens, "
+                "admin_users, system_settings CASCADE;"
+            )
+        )
     yield
     async with admin_engine.begin() as conn:
-        await conn.execute(text(
-            "TRUNCATE TABLE audit_events, templates, enrollment_sessions, users, "
-            "device_heartbeats, devices, pairing_tokens, admin_refresh_tokens, "
-            "admin_users, system_settings CASCADE;"
-        ))
+        await conn.execute(
+            text(
+                "TRUNCATE TABLE audit_events, templates, enrollment_sessions, users, "
+                "device_heartbeats, devices, pairing_tokens, admin_refresh_tokens, "
+                "admin_users, system_settings CASCADE;"
+            )
+        )
     await admin_engine.dispose()
 
 
@@ -213,7 +212,7 @@ def build_signed_headers(
     ts = timestamp if timestamp is not None else int(time.time())
     n = nonce if nonce is not None else secrets.token_hex(16)
     body_digest = hashlib.sha256(body).hexdigest()
-    canonical = f"{method.upper()}\n{path}\n{ts}\n{n}\n{body_digest}".encode("utf-8")
+    canonical = f"{method.upper()}\n{path}\n{ts}\n{n}\n{body_digest}".encode()
     sig = priv_key.sign(canonical)
     sig_b64 = base64.b64encode(sig).decode("ascii")
 
@@ -259,7 +258,9 @@ async def test_all_routes_enforce_auth_or_are_allowlisted(sec_env):
             if method.upper() in ("GET", "POST", "PUT", "PATCH", "DELETE"):
                 routes_to_test.append((method.upper(), path))
 
-    assert len(routes_to_test) >= 30, f"Expected >= 30 protected endpoints, found {len(routes_to_test)}"
+    assert len(routes_to_test) >= 30, (
+        f"Expected >= 30 protected endpoints, found {len(routes_to_test)}"
+    )
 
     for method, path in routes_to_test:
         call_path = path.replace("{user_id}", str(uuid.uuid4()))
@@ -294,7 +295,9 @@ async def test_rbac_permissions_matrix(sec_env, seeded_admins):
         "password": "SecurePassword123!",
         "role": "admin",
     }
-    r = await client.post("/v1/admin/admins", json=new_admin_payload, headers=seeded_admins["owner"]["headers"])
+    r = await client.post(
+        "/v1/admin/admins", json=new_admin_payload, headers=seeded_admins["owner"]["headers"]
+    )
     assert r.status_code == 201, r.text
 
     r = await client.put(
@@ -342,7 +345,9 @@ async def test_rbac_permissions_matrix(sec_env, seeded_admins):
     )
     assert r.status_code == 403, "Operator must not be allowed to create admins"
 
-    r = await client.delete(f"/v1/admin/users/{uuid.uuid4()}", headers=seeded_admins["operator"]["headers"])
+    r = await client.delete(
+        f"/v1/admin/users/{uuid.uuid4()}", headers=seeded_admins["operator"]["headers"]
+    )
     assert r.status_code == 403, "Operator must not be allowed to delete users"
 
     # Operator CAN list devices
@@ -405,7 +410,9 @@ async def test_device_scope_isolation(sec_env, seeded_admins, sample_payload_byt
     device_id = r.json()["device_id"]
 
     # 3. Verify endpoint access (should succeed with match=False since user is not enrolled)
-    v_headers = build_signed_headers(priv_key, device_id, "POST", "/v1/verify", sample_payload_bytes)
+    v_headers = build_signed_headers(
+        priv_key, device_id, "POST", "/v1/verify", sample_payload_bytes
+    )
     v_headers["Content-Type"] = "application/vnd.freqid.payload"
     v_headers["X-Claimed-Identity"] = "any_user"
     r = await client.post("/v1/verify", content=sample_payload_bytes, headers=v_headers)
@@ -413,17 +420,23 @@ async def test_device_scope_isolation(sec_env, seeded_admins, sample_payload_byt
     assert r.json()["is_match"] is False
 
     # 4. Attempt to access /v1/enroll (requires 'enroll' scope)
-    e_headers = build_signed_headers(priv_key, device_id, "POST", "/v1/enroll", sample_payload_bytes)
+    e_headers = build_signed_headers(
+        priv_key, device_id, "POST", "/v1/enroll", sample_payload_bytes
+    )
     e_headers["Content-Type"] = "application/vnd.freqid.payload"
     e_headers["X-User-ID"] = "user_to_enroll"
     r = await client.post("/v1/enroll", content=sample_payload_bytes, headers=e_headers)
-    assert r.status_code == 403, f"Expected 403 Insufficient Scope on enroll, got {r.status_code}: {r.text}"
+    assert r.status_code == 403, (
+        f"Expected 403 Insufficient Scope on enroll, got {r.status_code}: {r.text}"
+    )
     assert "INSUFFICIENT_SCOPE" in r.text or "Forbidden" in r.text
 
     # 5. Attempt to access /v1/admin/devices (requires admin permissions)
     a_headers = build_signed_headers(priv_key, device_id, "GET", "/v1/admin/devices", b"")
     r = await client.get("/v1/admin/devices", headers=a_headers)
-    assert r.status_code in (401, 403), f"Expected 401/403 on admin endpoint, got {r.status_code}: {r.text}"
+    assert r.status_code in (401, 403), (
+        f"Expected 401/403 on admin endpoint, got {r.status_code}: {r.text}"
+    )
 
 
 # =========================================================================
@@ -491,7 +504,7 @@ async def test_pairing_token_lifecycle_and_concurrency(sec_env, seeded_admins):
     res1, res2 = await asyncio.gather(req1, req2)
     statuses = [res1.status_code, res2.status_code]
     assert 201 in statuses, f"At least one pair must succeed: {statuses}"
-    assert (400 in statuses or 409 in statuses), f"Second pair must be rejected: {statuses}"
+    assert 400 in statuses or 409 in statuses, f"Second pair must be rejected: {statuses}"
 
     # C. Verify database stores only the hash, never plaintext
     async with session_factory() as session:
@@ -535,12 +548,14 @@ async def test_immediate_device_revocation_and_resumption(sec_env, seeded_admins
 
     # Helper to send a signed heartbeat
     async def send_heartbeat():
-        body = json.dumps({
-            "software_version": "0.1.0",
-            "camera_ok": True,
-            "uptime_seconds": 120.0,
-            "queued_payloads": 0,
-        }).encode("utf-8")
+        body = json.dumps(
+            {
+                "software_version": "0.1.0",
+                "camera_ok": True,
+                "uptime_seconds": 120.0,
+                "queued_payloads": 0,
+            }
+        ).encode("utf-8")
         headers = build_signed_headers(priv_key, device_id, "POST", "/v1/devices/heartbeat", body)
         headers["Content-Type"] = "application/json"
         return await client.post("/v1/devices/heartbeat", content=body, headers=headers)
@@ -550,7 +565,9 @@ async def test_immediate_device_revocation_and_resumption(sec_env, seeded_admins
     assert r.status_code == 200, r.text
 
     # 3. Suspend device
-    r = await client.post(f"/v1/admin/devices/{device_id}/suspend", headers=seeded_admins["admin"]["headers"])
+    r = await client.post(
+        f"/v1/admin/devices/{device_id}/suspend", headers=seeded_admins["admin"]["headers"]
+    )
     assert r.status_code == 200, r.text
 
     # Next request must fail immediately with HTTP 403
@@ -559,7 +576,9 @@ async def test_immediate_device_revocation_and_resumption(sec_env, seeded_admins
     assert "DEVICE_SUSPENDED" in r.text
 
     # 4. Resume device
-    r = await client.post(f"/v1/admin/devices/{device_id}/resume", headers=seeded_admins["admin"]["headers"])
+    r = await client.post(
+        f"/v1/admin/devices/{device_id}/resume", headers=seeded_admins["admin"]["headers"]
+    )
     assert r.status_code == 200, r.text
 
     # Next request must succeed immediately
@@ -567,7 +586,9 @@ async def test_immediate_device_revocation_and_resumption(sec_env, seeded_admins
     assert r.status_code == 200, f"Expected 200 after resume, got {r.status_code}"
 
     # 5. Revoke device
-    r = await client.post(f"/v1/admin/devices/{device_id}/revoke", headers=seeded_admins["admin"]["headers"])
+    r = await client.post(
+        f"/v1/admin/devices/{device_id}/revoke", headers=seeded_admins["admin"]["headers"]
+    )
     assert r.status_code == 200, r.text
 
     # Next request must fail immediately with HTTP 403
@@ -576,7 +597,9 @@ async def test_immediate_device_revocation_and_resumption(sec_env, seeded_admins
     assert "DEVICE_REVOKED" in r.text
 
     # 6. Cannot resume a revoked device
-    r = await client.post(f"/v1/admin/devices/{device_id}/resume", headers=seeded_admins["admin"]["headers"])
+    r = await client.post(
+        f"/v1/admin/devices/{device_id}/resume", headers=seeded_admins["admin"]["headers"]
+    )
     assert r.status_code == 400, "Cannot resume revoked device"
 
 
@@ -607,16 +630,20 @@ async def test_replay_protection_and_timestamp_window(sec_env, seeded_admins):
         json={"token": token, "name": "replay_kiosk", "public_key": pub_b64},
     )
     device_id = r.json()["device_id"]
-    body = json.dumps({
-        "software_version": "0.1.0",
-        "camera_ok": True,
-        "uptime_seconds": 10.0,
-        "queued_payloads": 0,
-    }).encode("utf-8")
+    body = json.dumps(
+        {
+            "software_version": "0.1.0",
+            "camera_ok": True,
+            "uptime_seconds": 10.0,
+            "queued_payloads": 0,
+        }
+    ).encode("utf-8")
 
     # A. Stale timestamp in past
     old_ts = int(time.time()) - 350
-    headers = build_signed_headers(priv_key, device_id, "POST", "/v1/devices/heartbeat", body, timestamp=old_ts)
+    headers = build_signed_headers(
+        priv_key, device_id, "POST", "/v1/devices/heartbeat", body, timestamp=old_ts
+    )
     headers["Content-Type"] = "application/json"
     r = await client.post("/v1/devices/heartbeat", content=body, headers=headers)
     assert r.status_code == 401, f"Expected 401 for stale timestamp, got {r.status_code}"
@@ -624,14 +651,18 @@ async def test_replay_protection_and_timestamp_window(sec_env, seeded_admins):
 
     # B. Future timestamp
     fut_ts = int(time.time()) + 350
-    headers = build_signed_headers(priv_key, device_id, "POST", "/v1/devices/heartbeat", body, timestamp=fut_ts)
+    headers = build_signed_headers(
+        priv_key, device_id, "POST", "/v1/devices/heartbeat", body, timestamp=fut_ts
+    )
     headers["Content-Type"] = "application/json"
     r = await client.post("/v1/devices/heartbeat", content=body, headers=headers)
     assert r.status_code == 401, f"Expected 401 for future timestamp, got {r.status_code}"
 
     # C. Replay attack: send valid request, then replay it
     fresh_nonce = secrets.token_hex(16)
-    headers = build_signed_headers(priv_key, device_id, "POST", "/v1/devices/heartbeat", body, nonce=fresh_nonce)
+    headers = build_signed_headers(
+        priv_key, device_id, "POST", "/v1/devices/heartbeat", body, nonce=fresh_nonce
+    )
     headers["Content-Type"] = "application/json"
 
     # First attempt: succeeds
@@ -640,7 +671,9 @@ async def test_replay_protection_and_timestamp_window(sec_env, seeded_admins):
 
     # Second attempt (replay identical headers and body): must fail
     r2 = await client.post("/v1/devices/heartbeat", content=body, headers=headers)
-    assert r2.status_code in (400, 401), f"Expected 400/401 for replay attempt, got {r2.status_code}"
+    assert r2.status_code in (400, 401), (
+        f"Expected 400/401 for replay attempt, got {r2.status_code}"
+    )
     assert "REPLAY_DETECTED" in r2.text or "replay" in r2.text.lower()
 
 
@@ -676,7 +709,9 @@ async def test_anti_enumeration_login_timing(sec_env, seeded_admins):
 
     # Both must take significant time due to Argon2id (e.g. > 5ms), and time delta < 250ms
     assert t_existing > 0.005, f"Argon2 did not run for existing user: {t_existing}s"
-    assert t_nonexistent > 0.005, f"Argon2 dummy baseline did not run for nonexistent user: {t_nonexistent}s"
+    assert t_nonexistent > 0.005, (
+        f"Argon2 dummy baseline did not run for nonexistent user: {t_nonexistent}s"
+    )
     time_delta = abs(t_existing - t_nonexistent)
     assert time_delta < 0.250, (
         f"Timing discrepancy too large (anti-enumeration failure): "
@@ -766,8 +801,12 @@ async def test_static_tokens_rejected_in_production(clean_db):
     transport = httpx.ASGITransport(app=prod_app)
     async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
         # Dev static token must be rejected in production
-        r = await client.get("/v1/admin/system/status", headers={"Authorization": "Bearer dev_admin_token"})
-        assert r.status_code == 401, f"Expected 401 in production for static token, got {r.status_code}"
+        r = await client.get(
+            "/v1/admin/system/status", headers={"Authorization": "Bearer dev_admin_token"}
+        )
+        assert r.status_code == 401, (
+            f"Expected 401 in production for static token, got {r.status_code}"
+        )
         assert "production" in r.text.lower()
 
     await engine.dispose()

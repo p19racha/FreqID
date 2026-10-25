@@ -5,13 +5,11 @@ test_key_hierarchy.py: Tests for subkey derivation and Shamir Secret Sharing CLI
 
 from __future__ import annotations
 
-import base64
 import os
 import subprocess
 import sys
 from pathlib import Path
 
-import pytest
 from cryptography.hazmat.primitives.asymmetric import x25519
 
 from freqid_server.crypto.provider import EnvOrFileKeyProvider
@@ -72,7 +70,7 @@ def test_cli_generate_split_combine(tmp_path: Path):
     rec_file = tmp_path / "recovered.key"
 
     # 1. Generate key
-    res_gen = subprocess.run(
+    subprocess.run(
         [sys.executable, "scripts/freqid_keys.py", "generate", "--out", str(key_file)],
         capture_output=True,
         text=True,
@@ -110,14 +108,19 @@ def test_cli_generate_split_combine(tmp_path: Path):
         if line_str.startswith("--- [SHARE"):
             capture = True
             continue
-        if capture and line_str and not line_str.startswith("---") and not line_str.startswith("[!]"):
+        if (
+            capture
+            and line_str
+            and not line_str.startswith("---")
+            and not line_str.startswith("[!]")
+        ):
             shares.append(line_str)
             capture = False
 
     assert len(shares) == 5
 
     # 3. Combine with 3 shares (threshold met)
-    res_comb = subprocess.run(
+    subprocess.run(
         [
             sys.executable,
             "scripts/freqid_keys.py",

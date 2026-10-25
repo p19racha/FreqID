@@ -124,12 +124,16 @@ async def test_authentication_and_scope_enforcement(
         "X-User-ID": "alice",
         "Authorization": "Bearer dev_verify_token",
     }
-    res_enroll_scope = await client.post("/v1/enroll", headers=enroll_headers, content=sample_payload_bytes)
+    res_enroll_scope = await client.post(
+        "/v1/enroll", headers=enroll_headers, content=sample_payload_bytes
+    )
     assert res_enroll_scope.status_code == 403
     assert res_enroll_scope.json()["error"]["code"] == "INSUFFICIENT_SCOPE"
 
     # 4. Insufficient scope: 'kiosk' token cannot call 'delete user'
-    res_del_scope = await client.delete("/v1/users/alice", headers={"Authorization": "Bearer dev_kiosk_token"})
+    res_del_scope = await client.delete(
+        "/v1/users/alice", headers={"Authorization": "Bearer dev_kiosk_token"}
+    )
     assert res_del_scope.status_code == 403
 
 

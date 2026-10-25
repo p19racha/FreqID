@@ -7,7 +7,6 @@ and constant-time verification with calibrated dummy hashing against enumeration
 
 from __future__ import annotations
 
-import secrets
 from typing import Final
 
 import argon2

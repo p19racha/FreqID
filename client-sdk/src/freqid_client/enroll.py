@@ -16,6 +16,7 @@ from freqid_client.pipeline import ClientPipeline
 @dataclass(frozen=True)
 class EnrollmentProgress:
     """Structured progress update emitted to client UI/kiosk during enrollment."""
+
     frames_captured: int
     target_frames: int
     status: str  # "CAPTURING", "FRAME_ACCEPTED", "FRAME_REJECTED", "COMPLETED"

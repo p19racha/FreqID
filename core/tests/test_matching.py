@@ -48,7 +48,7 @@ def test_identify_ranking():
         [
             [0.0, 1.0, 0.0],  # id_ortho: sim = 0.0
             [0.9, 0.1, 0.0],  # id_close: sim ~ 0.99
-            [-1.0, 0.0, 0.0], # id_opp: sim = -1.0
+            [-1.0, 0.0, 0.0],  # id_opp: sim = -1.0
         ],
         dtype=np.float32,
     )

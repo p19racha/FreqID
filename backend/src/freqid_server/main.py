@@ -85,7 +85,9 @@ def create_app(
         active_key_provider = getattr(store.encryptor, "key_provider", None)
 
     if active_key_provider is None:
-        def_k = base64.b64decode(active_config.master_key) if active_config.master_key else b"\x00" * 32
+        def_k = (
+            base64.b64decode(active_config.master_key) if active_config.master_key else b"\x00" * 32
+        )
         active_key_provider = EnvOrFileKeyProvider(
             key_file_path=active_config.master_key_file or None,
             default_key=def_k,
@@ -244,7 +246,9 @@ def create_app(
         )
 
     @app.exception_handler(RequestValidationError)
-    async def validation_error_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+    async def validation_error_handler(
+        request: Request, exc: RequestValidationError
+    ) -> JSONResponse:
         req_id = getattr(request.state, "request_id", "unknown")
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -261,7 +265,10 @@ def create_app(
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
         req_id = getattr(request.state, "request_id", "unknown")
-        logger.error(f"Unhandled server error on {request.method} {request.url.path}: {exc} (req_id: {req_id})", exc_info=True)
+        logger.error(
+            f"Unhandled server error on {request.method} {request.url.path}: {exc} (req_id: {req_id})",
+            exc_info=True,
+        )
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={
@@ -297,7 +304,9 @@ def run_server() -> None:
     parser = argparse.ArgumentParser(description="FreqID Privacy-Preserving Inference Server")
     parser.add_argument("--host", type=str, default=None, help="Bind socket host (e.g. 0.0.0.0)")
     parser.add_argument("--port", type=int, default=None, help="Bind socket port (e.g. 8000)")
-    parser.add_argument("--config", type=str, default=None, help="Path to server YAML configuration")
+    parser.add_argument(
+        "--config", type=str, default=None, help="Path to server YAML configuration"
+    )
     parser.add_argument("--reload", action="store_true", help="Enable uvicorn live reload")
     args = parser.parse_args()
 

@@ -21,7 +21,9 @@ def run_benchmark():
     print("FreqID Server: 1:N Vector Search Scalability Benchmark")
     print(f"Embedding Dimension: {dim} | Query Iterations per Size: {num_queries}")
     print("=" * 70)
-    print(f"{'Gallery Size':<15}{'Mean (ms)':<12}{'Median (ms)':<14}{'P95 (ms)':<12}{'Throughput (QPS)':<18}")
+    print(
+        f"{'Gallery Size':<15}{'Mean (ms)':<12}{'Median (ms)':<14}{'P95 (ms)':<12}{'Throughput (QPS)':<18}"
+    )
     print("-" * 70)
 
     # Fixed seed for reproducibility

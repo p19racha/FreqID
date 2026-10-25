@@ -123,7 +123,9 @@ def main():
     parser = argparse.ArgumentParser(description="FreqID Server Load Testing Tool")
     parser.add_argument("--concurrency", type=int, default=4, help="Concurrent workers")
     parser.add_argument("--requests", type=int, default=40, help="Total requests to dispatch")
-    parser.add_argument("--url", type=str, default=None, help="Target server URL (default: in-process ASGI)")
+    parser.add_argument(
+        "--url", type=str, default=None, help="Target server URL (default: in-process ASGI)"
+    )
     args = parser.parse_args()
 
     asyncio.run(

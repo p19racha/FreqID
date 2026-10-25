@@ -89,7 +89,9 @@ async def test_enrollment_and_lifecycle(
         "X-Nonce": secrets.token_hex(16),
         "Authorization": "Bearer dev_kiosk_token",
     }
-    res_identify = await client.post("/v1/identify", headers=id_headers, content=sample_payload_bytes)
+    res_identify = await client.post(
+        "/v1/identify", headers=id_headers, content=sample_payload_bytes
+    )
     assert res_identify.status_code == 200
     id_data = res_identify.json()
     assert id_data["is_match"] is True
@@ -104,7 +106,9 @@ async def test_enrollment_and_lifecycle(
 
     # 5. Subsequent verification must fail (user deleted)
     v_headers["X-Nonce"] = secrets.token_hex(16)
-    res_verify_after = await client.post("/v1/verify", headers=v_headers, content=sample_payload_bytes)
+    res_verify_after = await client.post(
+        "/v1/verify", headers=v_headers, content=sample_payload_bytes
+    )
     assert res_verify_after.status_code == 200
     assert res_verify_after.json()["is_match"] is False
 

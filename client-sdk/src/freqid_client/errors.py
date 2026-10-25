@@ -22,6 +22,7 @@ class DetectionError(FreqIDClientError):
 
 class QualityGateRejectedError(FreqIDClientError):
     """Raised when a captured face frame fails quality gate requirements."""
+
     def __init__(self, reason_code: str, message: str) -> None:
         super().__init__(f"[{reason_code}] {message}")
         self.reason_code = reason_code
@@ -37,6 +38,7 @@ class TransportError(FreqIDClientError):
 
 class ServerRejectedError(TransportError):
     """Raised when server explicitly rejects request with error code (e.g. INVALID_PAYLOAD)."""
+
     def __init__(self, error_code: str, message: str, status_code: int = 400) -> None:
         super().__init__(f"Server rejected request ({error_code}, status {status_code}): {message}")
         self.error_code = error_code

@@ -5,7 +5,14 @@ generate_device_cert.py: Command-line utility to provision internal CA and devic
 """
 
 import argparse
+import sys
 from pathlib import Path
+
+# Add backend/src to sys.path to allow standalone execution
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+_BACKEND_SRC = _REPO_ROOT / "backend" / "src"
+if str(_BACKEND_SRC) not in sys.path:
+    sys.path.insert(0, str(_BACKEND_SRC))
 
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization

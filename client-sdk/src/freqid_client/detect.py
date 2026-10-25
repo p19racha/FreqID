@@ -18,6 +18,7 @@ from freqid_client.errors import DetectionError
 @dataclass(frozen=True)
 class FaceDetection:
     """Encapsulates a single detected face bounding box and 5 facial landmarks."""
+
     bbox: tuple[float, float, float, float]  # (x, y, w, h)
     score: float
     landmarks: np.ndarray  # Shape (5, 2): [left_eye, right_eye, nose, left_mouth, right_mouth]

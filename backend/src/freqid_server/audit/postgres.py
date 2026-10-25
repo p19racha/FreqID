@@ -63,9 +63,7 @@ class PostgresAuditSink(AuditSink):
         """Starts background worker."""
         if self._worker_task is None or self._worker_task.done():
             self._stop_event.clear()
-            self._worker_task = asyncio.create_task(
-                self._worker_loop(), name="freqid-audit-worker"
-            )
+            self._worker_task = asyncio.create_task(self._worker_loop(), name="freqid-audit-worker")
 
     async def shutdown(self) -> None:
         """Flushes remaining queued events and terminates worker."""
@@ -117,9 +115,7 @@ class PostgresAuditSink(AuditSink):
     async def _write_events_to_db(self, events: list[AuditEvent]) -> None:
         async with self.session_factory() as session, session.begin():
             # 1. Resolve user UUIDs for any external_ids in batch
-            external_ids = {
-                e.user_external_id for e in events if e.user_external_id
-            }
+            external_ids = {e.user_external_id for e in events if e.user_external_id}
             user_id_map = {}
             if external_ids:
                 stmt = select(UserOrm.id, UserOrm.external_id).where(
@@ -131,16 +127,10 @@ class PostgresAuditSink(AuditSink):
             # 2. Build row dicts
             rows = []
             for e in events:
-                user_uuid = (
-                    user_id_map.get(e.user_external_id)
-                    if e.user_external_id
-                    else None
-                )
+                user_uuid = user_id_map.get(e.user_external_id) if e.user_external_id else None
                 ext_id_hash = None
                 if e.user_external_id:
-                    ext_id_hash = hashlib.sha256(
-                        e.user_external_id.encode("utf-8")
-                    ).hexdigest()
+                    ext_id_hash = hashlib.sha256(e.user_external_id.encode("utf-8")).hexdigest()
 
                 ip_hash = hash_client_ip(e.client_ip, salt=self.ip_salt)
 
@@ -151,9 +141,7 @@ class PostgresAuditSink(AuditSink):
                         f"{e.event_time.isoformat()}:{e.event_type}:"
                         f"{e.principal_id}:{e.decision}:{e.request_id}"
                     )
-                    chain_val = hashlib.sha256(
-                        chain_input.encode("utf-8")
-                    ).hexdigest()
+                    chain_val = hashlib.sha256(chain_input.encode("utf-8")).hexdigest()
                     self._last_chain_hash = chain_val
 
                 rows.append(

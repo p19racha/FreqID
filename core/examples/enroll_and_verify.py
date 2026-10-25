@@ -7,6 +7,7 @@ server embedding, and 1:1 biometric verification on local images.
 
 import os
 import sys
+
 import cv2
 import numpy as np
 
@@ -41,9 +42,13 @@ def main():
     img_a2 = os.path.join(REPO_ROOT, "data", "train_subset", "images", "id_0000", "img_01.png")
     img_b1 = os.path.join(REPO_ROOT, "data", "train_subset", "images", "id_0001", "img_00.png")
 
-    ckpt_path = os.path.join(REPO_ROOT, "research", "outputs", "checkpoints", "partialface_ir_18.onnx")
+    ckpt_path = os.path.join(
+        REPO_ROOT, "research", "outputs", "checkpoints", "partialface_ir_18.onnx"
+    )
     if not os.path.exists(ckpt_path):
-        ckpt_path = os.path.join(REPO_ROOT, "research", "outputs", "checkpoints", "partialface_ir_18_epoch5.pth")
+        ckpt_path = os.path.join(
+            REPO_ROOT, "research", "outputs", "checkpoints", "partialface_ir_18_epoch5.pth"
+        )
         backend = "torch"
     else:
         backend = "onnx"
@@ -83,13 +88,15 @@ def main():
     score_genuine, match_genuine = fq.verify(emb_a1, emb_a2, threshold=0.35)
     score_impostor, match_impostor = fq.verify(emb_a1, emb_b1, threshold=0.35)
 
-    print(f"  [GENUINE PAIR]  Person A (Img 1) vs Person A (Img 2):")
+    print("  [GENUINE PAIR]  Person A (Img 1) vs Person A (Img 2):")
     print(f"    Cosine Similarity: {score_genuine:.4f}")
     print(f"    Decision:          {'VERIFIED (Same Person)' if match_genuine else 'REJECTED'}")
 
-    print(f"\n  [IMPOSTOR PAIR] Person A (Img 1) vs Person B (Img 1):")
+    print("\n  [IMPOSTOR PAIR] Person A (Img 1) vs Person B (Img 1):")
     print(f"    Cosine Similarity: {score_impostor:.4f}")
-    print(f"    Decision:          {'VERIFIED' if match_impostor else 'REJECTED (Different Person)'}")
+    print(
+        f"    Decision:          {'VERIFIED' if match_impostor else 'REJECTED (Different Person)'}"
+    )
 
     assert match_genuine is True, "Genuine pair failed to match!"
     assert match_impostor is False, "Impostor pair falsely accepted!"

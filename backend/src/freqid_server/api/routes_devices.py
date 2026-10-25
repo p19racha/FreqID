@@ -9,11 +9,9 @@ import base64
 import hashlib
 import uuid
 from datetime import datetime, timezone
-from typing import Any
 
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy import select, update
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from freqid_server.api.schemas import (
     DeviceHeartbeatRequest,
@@ -23,11 +21,10 @@ from freqid_server.api.schemas import (
     DeviceRotateKeyRequest,
     DeviceRotateKeyResponse,
 )
-from freqid_server.audit.base import AuditEvent, hash_client_ip
+from freqid_server.audit.base import AuditEvent
 from freqid_server.auth.base import AuthenticatedPrincipal
 from freqid_server.errors import AuthenticationError, ValidationError
 from freqid_server.storage.models import (
-    AuditEventOrm,
     DeviceHeartbeatOrm,
     DeviceOrm,
     PairingTokenOrm,
@@ -45,8 +42,18 @@ async def get_current_device(request: Request) -> AuthenticatedPrincipal:
     return principal
 
 
-@router.post("/v1/devices/pair", response_model=DevicePairResponse, status_code=201, operation_id="device_pair")
-@router.post("/api/v1/devices/pair", response_model=DevicePairResponse, status_code=201, include_in_schema=False)
+@router.post(
+    "/v1/devices/pair",
+    response_model=DevicePairResponse,
+    status_code=201,
+    operation_id="device_pair",
+)
+@router.post(
+    "/api/v1/devices/pair",
+    response_model=DevicePairResponse,
+    status_code=201,
+    include_in_schema=False,
+)
 async def pair_device(
     payload: DevicePairRequest,
     request: Request,
@@ -100,7 +107,11 @@ async def pair_device(
             token_row.used_at = now
             token_row.used_by_device_id = dev_id
 
-            scopes = token_row.scopes_allowed if isinstance(token_row.scopes_allowed, list) else ["verify"]
+            scopes = (
+                token_row.scopes_allowed
+                if isinstance(token_row.scopes_allowed, list)
+                else ["verify"]
+            )
             initial_state = "active" if getattr(cfg, "device_auto_approve", True) else "pending"
 
             device_orm = DeviceOrm(
@@ -152,8 +163,12 @@ async def pair_device(
     )
 
 
-@router.post("/v1/devices/heartbeat", response_model=DeviceHeartbeatResponse, operation_id="device_heartbeat")
-@router.post("/api/v1/devices/heartbeat", response_model=DeviceHeartbeatResponse, include_in_schema=False)
+@router.post(
+    "/v1/devices/heartbeat", response_model=DeviceHeartbeatResponse, operation_id="device_heartbeat"
+)
+@router.post(
+    "/api/v1/devices/heartbeat", response_model=DeviceHeartbeatResponse, include_in_schema=False
+)
 async def device_heartbeat(
     payload: DeviceHeartbeatRequest,
     request: Request,
@@ -197,8 +212,14 @@ async def device_heartbeat(
     )
 
 
-@router.post("/v1/devices/rotate-key", response_model=DeviceRotateKeyResponse, operation_id="device_rotate_key")
-@router.post("/api/v1/devices/rotate-key", response_model=DeviceRotateKeyResponse, include_in_schema=False)
+@router.post(
+    "/v1/devices/rotate-key",
+    response_model=DeviceRotateKeyResponse,
+    operation_id="device_rotate_key",
+)
+@router.post(
+    "/api/v1/devices/rotate-key", response_model=DeviceRotateKeyResponse, include_in_schema=False
+)
 async def device_rotate_key(
     payload: DeviceRotateKeyRequest,
     request: Request,

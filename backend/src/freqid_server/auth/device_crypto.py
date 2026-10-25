@@ -8,12 +8,9 @@ from __future__ import annotations
 
 import base64
 import hashlib
-from typing import Final
 
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric import ed25519
-
-from freqid_server.errors import AuthenticationError
 
 
 def compute_body_digest(body: bytes) -> str:

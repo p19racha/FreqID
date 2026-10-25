@@ -107,7 +107,6 @@ def __getattr__(name: str) -> Any:
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
-
 # Precompute 8x8 DCT orthonormal basis for Pure-NumPy engine
 def _build_numpy_dct_basis() -> tuple[np.ndarray, np.ndarray]:
     N = 8
@@ -149,15 +148,23 @@ def transform_numpy_pure(
         if img.dtype == np.uint8:
             norm_img = img.astype(np.float32) / 255.0
         else:
-            norm_img = (img.astype(np.float32) * 0.5 + 0.5) if img.min() < 0 else img.astype(np.float32)
+            norm_img = (
+                (img.astype(np.float32) * 0.5 + 0.5) if img.min() < 0 else img.astype(np.float32)
+            )
     elif img.ndim == 3 and img.shape == (3, 112, 112):
         img_trans = img.transpose((1, 2, 0))
         if img_trans.dtype == np.uint8:
             norm_img = img_trans.astype(np.float32) / 255.0
         else:
-            norm_img = (img_trans.astype(np.float32) * 0.5 + 0.5) if img_trans.min() < 0 else img_trans.astype(np.float32)
+            norm_img = (
+                (img_trans.astype(np.float32) * 0.5 + 0.5)
+                if img_trans.min() < 0
+                else img_trans.astype(np.float32)
+            )
     else:
-        raise ShapeMismatchError(f"Unsupported image shape {img.shape}. Expected (112, 112, 3) or (3, 112, 112).")
+        raise ShapeMismatchError(
+            f"Unsupported image shape {img.shape}. Expected (112, 112, 3) or (3, 112, 112)."
+        )
 
     # 1. Bilinear upsample align_corners=True: (112, 112) -> (896, 896)
     in_h, in_w = 112, 112
@@ -174,8 +181,14 @@ def transform_numpy_pure(
     upsampled = np.zeros((out_h, out_w, 3), dtype=np.float32)
     for ch in range(3):
         c_plane = norm_img[:, :, ch]
-        top = c_plane[y_floor[:, None], x_floor[None, :]] * (1.0 - x_w) + c_plane[y_floor[:, None], x_ceil[None, :]] * x_w
-        bot = c_plane[y_ceil[:, None], x_floor[None, :]] * (1.0 - x_w) + c_plane[y_ceil[:, None], x_ceil[None, :]] * x_w
+        top = (
+            c_plane[y_floor[:, None], x_floor[None, :]] * (1.0 - x_w)
+            + c_plane[y_floor[:, None], x_ceil[None, :]] * x_w
+        )
+        bot = (
+            c_plane[y_ceil[:, None], x_floor[None, :]] * (1.0 - x_w)
+            + c_plane[y_ceil[:, None], x_ceil[None, :]] * x_w
+        )
         upsampled[:, :, ch] = top * (1.0 - y_w) + bot * y_w
 
     # 2. RGB -> YCbCr with 128 level shift
@@ -199,7 +212,9 @@ def transform_numpy_pure(
     # 5. Subset sampling
     if subset_index is not None:
         if not (0 <= subset_index < cfg.num_subsets):
-            raise ValueError(f"subset_index must be in [0, {cfg.num_subsets - 1}], got {subset_index}")
+            raise ValueError(
+                f"subset_index must be in [0, {cfg.num_subsets - 1}], got {subset_index}"
+            )
         chosen_subset = subset_index
     elif rng is not None:
         gen = np.random.default_rng(rng) if isinstance(rng, int) else rng
@@ -213,7 +228,9 @@ def transform_numpy_pure(
     # 6. Permute channels
     if perm_index is not None:
         if not (0 <= perm_index < len(CANDIDATE_PERMUTATIONS_NUMPY)):
-            raise ValueError(f"perm_index must be in [0, {len(CANDIDATE_PERMUTATIONS_NUMPY) - 1}], got {perm_index}")
+            raise ValueError(
+                f"perm_index must be in [0, {len(CANDIDATE_PERMUTATIONS_NUMPY) - 1}], got {perm_index}"
+            )
         chosen_perm = perm_index
     elif rng is not None:
         gen = np.random.default_rng(rng) if isinstance(rng, int) else rng
@@ -237,7 +254,12 @@ def _preprocess_spatial_input(image: Any) -> Any:
                 tensor = (tensor / 255.0 - 0.5) / 0.5
             else:
                 tensor = torch.from_numpy(image.transpose((2, 0, 1))).float()
-        elif image.ndim == 3 and image.shape == (3, 112, 112) or image.ndim == 4 and image.shape[1:] == (3, 112, 112):
+        elif (
+            image.ndim == 3
+            and image.shape == (3, 112, 112)
+            or image.ndim == 4
+            and image.shape[1:] == (3, 112, 112)
+        ):
             tensor = torch.from_numpy(image).float()
             if tensor.max() > 1.0 or tensor.min() < -1.0:
                 tensor = (tensor / 255.0 - 0.5) / 0.5
@@ -331,7 +353,9 @@ def image_to_partial_frequency(
 
     if subset_index is not None:
         if not (0 <= subset_index < cfg.num_subsets):
-            raise ValueError(f"subset_index must be in [0, {cfg.num_subsets - 1}], got {subset_index}")
+            raise ValueError(
+                f"subset_index must be in [0, {cfg.num_subsets - 1}], got {subset_index}"
+            )
         chosen_subset = subset_index
     elif rng is not None:
         gen = np.random.default_rng(rng) if isinstance(rng, int) else rng
@@ -343,7 +367,9 @@ def image_to_partial_frequency(
 
     if perm_index is not None:
         if not (0 <= perm_index < len(CANDIDATE_PERMUTATIONS)):
-            raise ValueError(f"perm_index must be in [0, {len(CANDIDATE_PERMUTATIONS) - 1}], got {perm_index}")
+            raise ValueError(
+                f"perm_index must be in [0, {len(CANDIDATE_PERMUTATIONS) - 1}], got {perm_index}"
+            )
         chosen_perm = perm_index
     elif rng is not None:
         gen = np.random.default_rng(rng) if isinstance(rng, int) else rng
@@ -385,4 +411,3 @@ def batch_images_to_partial_frequency(
         if isinstance(outputs[0], torch.Tensor):
             return torch.stack(outputs, dim=0)
     return np.stack(outputs, axis=0)
-

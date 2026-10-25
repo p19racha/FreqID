@@ -23,6 +23,7 @@ DEFAULT_YUNET_MODEL_PATH = str(
 @dataclass
 class ClientConfig:
     """Configuration settings for freqid-client edge SDK."""
+
     # Server & Transport
     server_url: str = "http://localhost:8000"
     device_id: str = "dev_default"
@@ -118,7 +119,11 @@ class ClientConfig:
         if os.getenv("FREQID_PINNED_CERT_FINGERPRINT"):
             cfg.pinned_cert_fingerprint = os.environ["FREQID_PINNED_CERT_FINGERPRINT"]
         if os.getenv("FREQID_INSECURE_SKIP_VERIFY"):
-            cfg.insecure_skip_verify = os.environ["FREQID_INSECURE_SKIP_VERIFY"].lower() in ("1", "true", "yes")
+            cfg.insecure_skip_verify = os.environ["FREQID_INSECURE_SKIP_VERIFY"].lower() in (
+                "1",
+                "true",
+                "yes",
+            )
         if os.getenv("FREQID_CAMERA_INDEX"):
             try:
                 cfg.camera_index = int(os.environ["FREQID_CAMERA_INDEX"])

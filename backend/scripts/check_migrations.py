@@ -103,7 +103,9 @@ async def insert_phase5_test_data(db_url: str) -> None:
             uuid.uuid4(),
             user_id,
         )
-        print("   -> Inserted Phase 5 test records (users, templates, audit_events with string IDs).")
+        print(
+            "   -> Inserted Phase 5 test records (users, templates, audit_events with string IDs)."
+        )
     finally:
         await conn.close()
 
@@ -115,7 +117,7 @@ async def verify_phase6_data(db_url: str) -> None:
         # Check column types on audit_events
         row = await conn.fetchrow(
             """
-            SELECT data_type FROM information_schema.columns 
+            SELECT data_type FROM information_schema.columns
             WHERE table_name = 'audit_events' AND column_name = 'device_id'
             """
         )
@@ -125,20 +127,26 @@ async def verify_phase6_data(db_url: str) -> None:
         dev_rows = await conn.fetch("SELECT device_id, admin_id, request_id FROM audit_events")
         assert len(dev_rows) == 2, f"Expected 2 audit rows, got {len(dev_rows)}"
         for r in dev_rows:
-            assert r["device_id"] is None, f"Expected NULL device_id for legacy string, got {r['device_id']}"
-            assert r["admin_id"] is None, f"Expected NULL admin_id for legacy string, got {r['admin_id']}"
+            assert r["device_id"] is None, (
+                f"Expected NULL device_id for legacy string, got {r['device_id']}"
+            )
+            assert r["admin_id"] is None, (
+                f"Expected NULL admin_id for legacy string, got {r['admin_id']}"
+            )
 
         # Verify new tables exist
         tables = await conn.fetch(
             """
-            SELECT table_name FROM information_schema.tables 
+            SELECT table_name FROM information_schema.tables
             WHERE table_schema = 'public' AND table_name IN ('admin_users', 'devices', 'pairing_tokens')
             """
         )
         found_tables = {t["table_name"] for t in tables}
         expected = {"admin_users", "devices", "pairing_tokens"}
         assert expected.issubset(found_tables), f"Missing tables: {expected - found_tables}"
-        print("   -> Phase 6 verification passed: column types converted to UUID, new tables present.")
+        print(
+            "   -> Phase 6 verification passed: column types converted to UUID, new tables present."
+        )
     finally:
         await conn.close()
 
@@ -154,7 +162,9 @@ def main():
     asyncio.run(create_db(admin_url, test_db_name))
 
     test_db_asyncpg_url = f"postgresql+asyncpg://freqid_admin:freqid_admin_dev_password@127.0.0.1:54322/{test_db_name}"
-    test_db_sync_url = f"postgresql://freqid_admin:freqid_admin_dev_password@127.0.0.1:54322/{test_db_name}"
+    test_db_sync_url = (
+        f"postgresql://freqid_admin:freqid_admin_dev_password@127.0.0.1:54322/{test_db_name}"
+    )
     os.environ["FREQID_DATABASE_URL"] = test_db_asyncpg_url
 
     backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))

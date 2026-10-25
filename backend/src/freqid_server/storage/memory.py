@@ -64,13 +64,16 @@ class MemoryTemplateStore(TemplateStore):
                     metadata=meta,
                 )
 
-    async def put_template(self, template: EnrolledTemplate, expected_version: int | None = None) -> None:
+    async def put_template(
+        self, template: EnrolledTemplate, expected_version: int | None = None
+    ) -> None:
         async with self._lock:
             existing = template.user_id in self._templates
             if existing:
                 curr_ver = self._template_versions.get(template.user_id, 1)
                 if expected_version is not None and curr_ver != expected_version:
                     from freqid_server.errors import OptimisticLockError
+
                     raise OptimisticLockError(
                         f"Optimistic lock conflict for user '{template.user_id}': expected version {expected_version}, but found {curr_ver}."
                     )
@@ -84,7 +87,7 @@ class MemoryTemplateStore(TemplateStore):
                 with sqlite3.connect(self._sqlite_path) as conn:
                     conn.execute(
                         """
-                        INSERT OR REPLACE INTO templates 
+                        INSERT OR REPLACE INTO templates
                         (user_id, template_id, embedding, model_version, enrolled_at_iso, frames_used, metadata_json)
                         VALUES (?, ?, ?, ?, ?, ?, ?)
                         """,

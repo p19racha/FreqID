@@ -13,7 +13,9 @@ from freqid_core.errors import ShapeMismatchError
 from freqid_core.payload import PartialFacePayload
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-CKPT_PATH = os.path.join(REPO_ROOT, "research", "outputs", "checkpoints", "partialface_ir_18_epoch5.pth")
+CKPT_PATH = os.path.join(
+    REPO_ROOT, "research", "outputs", "checkpoints", "partialface_ir_18_epoch5.pth"
+)
 ONNX_PATH = os.path.join(REPO_ROOT, "research", "outputs", "checkpoints", "partialface_ir_18.onnx")
 
 

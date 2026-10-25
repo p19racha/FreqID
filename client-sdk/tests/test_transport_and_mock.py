@@ -28,7 +28,6 @@ def test_transport(monkeypatch):
     transport.close()
 
 
-
 def test_mock_health(test_transport):
     r = test_transport._client.get("/health")
     assert r.status_code == 200
@@ -50,9 +49,15 @@ def test_enroll_and_verify_end_to_end(test_transport):
         im_a1 = cv2.imread(str(img_alice1_path))
         im_a2 = cv2.imread(str(img_alice2_path))
         im_b = cv2.imread(str(img_bob_path))
-        f_a1 = image_to_partial_frequency(cv2.cvtColor(im_a1, cv2.COLOR_BGR2RGB), subset_index=0, perm_index=0, engine="numpy")
-        f_a2 = image_to_partial_frequency(cv2.cvtColor(im_a2, cv2.COLOR_BGR2RGB), subset_index=0, perm_index=0, engine="numpy")
-        f_b = image_to_partial_frequency(cv2.cvtColor(im_b, cv2.COLOR_BGR2RGB), subset_index=0, perm_index=0, engine="numpy")
+        f_a1 = image_to_partial_frequency(
+            cv2.cvtColor(im_a1, cv2.COLOR_BGR2RGB), subset_index=0, perm_index=0, engine="numpy"
+        )
+        f_a2 = image_to_partial_frequency(
+            cv2.cvtColor(im_a2, cv2.COLOR_BGR2RGB), subset_index=0, perm_index=0, engine="numpy"
+        )
+        f_b = image_to_partial_frequency(
+            cv2.cvtColor(im_b, cv2.COLOR_BGR2RGB), subset_index=0, perm_index=0, engine="numpy"
+        )
         p_alice1 = fq.PartialFacePayload(f_a1, subset_index=0, perm_index=0).to_bytes()
         p_alice2 = fq.PartialFacePayload(f_a2, subset_index=0, perm_index=0).to_bytes()
         p_bob = fq.PartialFacePayload(f_b, subset_index=0, perm_index=0).to_bytes()
@@ -84,7 +89,9 @@ def test_enroll_and_verify_end_to_end(test_transport):
 
 
 def test_replay_attack_rejected(test_transport):
-    dummy_payload = fq.PartialFacePayload(np.random.randn(27, 112, 112).astype(np.float32)).to_bytes()
+    dummy_payload = fq.PartialFacePayload(
+        np.random.randn(27, 112, 112).astype(np.float32)
+    ).to_bytes()
     fixed_nonce = "fixed_test_nonce_1234"
 
     # First request: succeeds

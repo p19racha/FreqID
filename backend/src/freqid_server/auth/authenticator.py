@@ -124,7 +124,9 @@ class UnifiedAuthenticator(RequestAuthenticator):
 
             # Try Dev Static Token
             if token in self._dev_tokens:
-                return self._authenticate_static_token(token, headers.get("X-Device-ID"), required_scope)
+                return self._authenticate_static_token(
+                    token, headers.get("X-Device-ID"), required_scope
+                )
 
         raise AuthenticationError("Missing or invalid authentication credentials.")
 
@@ -243,7 +245,7 @@ class UnifiedAuthenticator(RequestAuthenticator):
         self, payload: dict[str, Any], required_scope: str | None
     ) -> AuthenticatedPrincipal:
         admin_id_str = payload.get("sub")
-        role = payload.get("role", "operator")
+        payload.get("role", "operator")
         permissions = set(payload.get("permissions", []))
 
         if not admin_id_str:
@@ -269,9 +271,7 @@ class UnifiedAuthenticator(RequestAuthenticator):
 
         # Check required scope
         if required_scope and required_scope not in permissions and "admin" not in permissions:
-            raise InsufficientScopeError(
-                f"Admin lacks required permission '{required_scope}'."
-            )
+            raise InsufficientScopeError(f"Admin lacks required permission '{required_scope}'.")
 
         return AuthenticatedPrincipal(
             principal_id=str(admin_uuid),
@@ -292,9 +292,7 @@ class UnifiedAuthenticator(RequestAuthenticator):
 
         scopes = self._dev_tokens[token]
         if required_scope and required_scope not in scopes and "admin" not in scopes:
-            raise InsufficientScopeError(
-                f"Static token lacks required scope '{required_scope}'."
-            )
+            raise InsufficientScopeError(f"Static token lacks required scope '{required_scope}'.")
 
         is_admin = "admin" in scopes
         return AuthenticatedPrincipal(

@@ -39,7 +39,7 @@ def generate_orthogonal_matrix(key_bytes: bytes, dim: int = EMBEDDING_DIM) -> np
     # Expand key using HKDF-Expand with SHA-256 blocks
     # Each pair needs 2 uint32s = 8 bytes
     total_bytes = needed_pairs * 8
-    
+
     # Derivation in chunks using HKDF with sequential counter
     raw_buffer = bytearray()
     chunk_idx = 0
@@ -55,7 +55,9 @@ def generate_orthogonal_matrix(key_bytes: bytes, dim: int = EMBEDDING_DIM) -> np
 
     # Unpack uint32 integers and normalize to (0, 1]
     u1_ints = np.frombuffer(raw_buffer[: needed_pairs * 4], dtype=">u4").astype(np.float64)
-    u2_ints = np.frombuffer(raw_buffer[needed_pairs * 4 : needed_pairs * 8], dtype=">u4").astype(np.float64)
+    u2_ints = np.frombuffer(raw_buffer[needed_pairs * 4 : needed_pairs * 8], dtype=">u4").astype(
+        np.float64
+    )
 
     # Shift from [0, 2^32-1] to (0, 1]
     u1 = (u1_ints + 1.0) / (4294967296.0 + 1.0)
@@ -129,13 +131,17 @@ class TemplateTransformer:
 
         return transformed.astype(np.float32)
 
-    def inverse_transform(self, protected_embedding: np.ndarray, key_id: str | None = None) -> np.ndarray:
+    def inverse_transform(
+        self, protected_embedding: np.ndarray, key_id: str | None = None
+    ) -> np.ndarray:
         """
         Inverts protected representation y back to x: x = R^T @ y.
         (Only possible with possession of key_id).
         """
         if protected_embedding.shape != (self.dim,):
-            raise ValueError(f"Expected embedding shape ({self.dim},), got {protected_embedding.shape}")
+            raise ValueError(
+                f"Expected embedding shape ({self.dim},), got {protected_embedding.shape}"
+            )
 
         R = self.get_matrix(key_id)
         emb_f32 = protected_embedding.astype(np.float32)

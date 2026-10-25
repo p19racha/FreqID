@@ -48,11 +48,7 @@ async def rotate_keys(
     async with session_factory() as session:
         while True:
             # Resumable: always queries records with old key_id
-            stmt = (
-                select(TemplateOrm)
-                .where(TemplateOrm.key_id != new_key_id)
-                .limit(batch_size)
-            )
+            stmt = select(TemplateOrm).where(TemplateOrm.key_id != new_key_id).limit(batch_size)
             res = await session.execute(stmt)
             batch = res.scalars().all()
             if not batch:
@@ -92,9 +88,15 @@ async def rotate_keys(
 
 def main():
     parser = argparse.ArgumentParser(description="FreqID Master Key Rotation Utility")
-    parser.add_argument("--new-key-id", type=str, required=True, help="Active master key ID to re-wrap towards")
-    parser.add_argument("--batch-size", type=int, default=500, help="Batch commit size (default: 500)")
-    parser.add_argument("--dry-run", action="store_true", help="Validate without committing DB changes")
+    parser.add_argument(
+        "--new-key-id", type=str, required=True, help="Active master key ID to re-wrap towards"
+    )
+    parser.add_argument(
+        "--batch-size", type=int, default=500, help="Batch commit size (default: 500)"
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Validate without committing DB changes"
+    )
     parser.add_argument(
         "--db-url",
         type=str,

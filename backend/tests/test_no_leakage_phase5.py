@@ -58,8 +58,8 @@ async def test_database_schema_has_no_raw_image_or_payload_columns():
         res = await conn.execute(
             text(
                 """
-                SELECT table_name, column_name, data_type 
-                FROM information_schema.columns 
+                SELECT table_name, column_name, data_type
+                FROM information_schema.columns
                 WHERE table_schema = 'public'
                 ORDER BY table_name, ordinal_position;
                 """
@@ -73,7 +73,9 @@ async def test_database_schema_has_no_raw_image_or_payload_columns():
     for tbl, col, dtype in columns:
         col_lower = col.lower()
         if tbl == "device_heartbeats" and col_lower == "queued_payloads":
-            assert dtype in ("integer", "bigint", "smallint"), "queued_payloads must be an integer count"
+            assert dtype in ("integer", "bigint", "smallint"), (
+                "queued_payloads must be an integer count"
+            )
             continue
         for forbidden in FORBIDDEN_COLUMN_PATTERNS:
             assert forbidden not in col_lower, (

@@ -47,7 +47,9 @@ class NonceTracker:
 class RateLimiter:
     """Sliding-window in-memory rate limiter with user lockout on failed attempts."""
 
-    def __init__(self, rate_limit_per_min: int = 120, max_failed_lockout: int = 5, lockout_sec: int = 60) -> None:
+    def __init__(
+        self, rate_limit_per_min: int = 120, max_failed_lockout: int = 5, lockout_sec: int = 60
+    ) -> None:
         self.rate_limit = rate_limit_per_min
         self.max_failed = max_failed_lockout
         self.lockout_duration = lockout_sec
@@ -100,15 +102,17 @@ class SecurityMiddleware(BaseHTTPMiddleware):
     """
 
     KNOWN_IMAGE_MAGIC: ClassVar[list[bytes]] = [
-        b"\xff\xd8\xff",        # JPEG
-        b"\x89PNG\r\n\x1a\n",   # PNG
-        b"BM",                  # BMP
-        b"GIF87a",              # GIF87a
-        b"GIF89a",              # GIF89a
-        b"RIFF",                # WebP (RIFF....WEBP)
+        b"\xff\xd8\xff",  # JPEG
+        b"\x89PNG\r\n\x1a\n",  # PNG
+        b"BM",  # BMP
+        b"GIF87a",  # GIF87a
+        b"GIF89a",  # GIF89a
+        b"RIFF",  # WebP (RIFF....WEBP)
     ]
 
-    def __init__(self, app: Any, config: ServerConfig, nonce_tracker: NonceTracker, rate_limiter: RateLimiter) -> None:
+    def __init__(
+        self, app: Any, config: ServerConfig, nonce_tracker: NonceTracker, rate_limiter: RateLimiter
+    ) -> None:
         super().__init__(app)
         self.config = config
         self.nonces = nonce_tracker
@@ -154,12 +158,19 @@ class SecurityMiddleware(BaseHTTPMiddleware):
 
         # 3. Size and Binary Inspections on POST endpoints
         if request.method == "POST" and path in (
-            "/v1/verify", "/api/v1/auth/verify",
-            "/v1/identify", "/api/v1/auth/identify",
-            "/v1/enroll", "/api/v1/enroll/frames",
+            "/v1/verify",
+            "/api/v1/auth/verify",
+            "/v1/identify",
+            "/api/v1/auth/identify",
+            "/v1/enroll",
+            "/api/v1/enroll/frames",
         ):
             is_enroll = "enroll" in path
-            max_size = self.config.max_batch_payload_bytes if is_enroll else self.config.max_single_payload_bytes
+            max_size = (
+                self.config.max_batch_payload_bytes
+                if is_enroll
+                else self.config.max_single_payload_bytes
+            )
 
             content_length = request.headers.get("Content-Length")
             if content_length and int(content_length) > max_size:

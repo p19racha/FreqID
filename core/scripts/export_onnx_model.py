@@ -39,9 +39,15 @@ def benchmark_session(session, batch_size, num_runs=30, warmup=5):
 
 
 def main():
-    ckpt_path = os.path.join(REPO_ROOT, "research", "outputs", "checkpoints", "partialface_ir_18_epoch5.pth")
-    onnx_path = os.path.join(REPO_ROOT, "research", "outputs", "checkpoints", "partialface_ir_18.onnx")
-    quant_onnx_path = os.path.join(REPO_ROOT, "research", "outputs", "checkpoints", "partialface_ir_18_int8.onnx")
+    ckpt_path = os.path.join(
+        REPO_ROOT, "research", "outputs", "checkpoints", "partialface_ir_18_epoch5.pth"
+    )
+    onnx_path = os.path.join(
+        REPO_ROOT, "research", "outputs", "checkpoints", "partialface_ir_18.onnx"
+    )
+    quant_onnx_path = os.path.join(
+        REPO_ROOT, "research", "outputs", "checkpoints", "partialface_ir_18_int8.onnx"
+    )
     log_file = os.path.join(REPO_ROOT, "core", "scripts", "onnx_export.log")
 
     print("=== Exporting PartialFace IR_18 to ONNX (Opset 14) ===")
@@ -71,7 +77,9 @@ def main():
     b32_per_img, b32_batch, b32_fps = benchmark_session(session_fp32, batch_size=32)
 
     print(f"Batch Size 1:  {b1_per_img:.2f} ms/image ({b1_fps:.1f} FPS, {b1_batch:.2f} ms/batch)")
-    print(f"Batch Size 32: {b32_per_img:.2f} ms/image ({b32_fps:.1f} FPS, {b32_batch:.2f} ms/batch)")
+    print(
+        f"Batch Size 32: {b32_per_img:.2f} ms/image ({b32_fps:.1f} FPS, {b32_batch:.2f} ms/batch)"
+    )
 
     # 3. Dynamic INT8 Quantization Experiment
     print("\n--- Dynamic INT8 Quantization Experiment ---")
@@ -81,7 +89,9 @@ def main():
         weight_type=QuantType.QInt8,
     )
     quant_size_mb = os.path.getsize(quant_onnx_path) / (1024 * 1024)
-    print(f"INT8 Quantized Model File Size: {quant_size_mb:.2f} MB (Compression: {(1 - quant_size_mb / onnx_file_size_mb) * 100:.1f}%)")
+    print(
+        f"INT8 Quantized Model File Size: {quant_size_mb:.2f} MB (Compression: {(1 - quant_size_mb / onnx_file_size_mb) * 100:.1f}%)"
+    )
 
     session_int8 = ort.InferenceSession(quant_onnx_path, providers=["CPUExecutionProvider"])
     q_b1_per_img, _, q_b1_fps = benchmark_session(session_int8, batch_size=1)
@@ -103,7 +113,9 @@ def main():
     # Write log
     with open(log_file, "w") as f:
         f.write("=== ONNX Export and Benchmark Report ===\n")
-        f.write("Opset Version:           14 (Pinned for dynamic shapes and modern operator support)\n")
+        f.write(
+            "Opset Version:           14 (Pinned for dynamic shapes and modern operator support)\n"
+        )
         f.write("Input Name:              partial_frequency\n")
         f.write("Output Name:             embedding\n")
         f.write(f"FP32 Model Size:         {onnx_file_size_mb:.2f} MB\n")

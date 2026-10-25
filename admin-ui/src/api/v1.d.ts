@@ -783,6 +783,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/admin/security/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Security Status
+         * @description Returns active cryptographic security posture, template protection state, and anomaly detector telemetry.
+         */
+        get: operations["admin_security_status"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/payload-key": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Active Server Payload Sealing Public Key
+         * @description Returns the server's active X25519 public key.
+         *     Edge clients use this public key with ephemeral ECDH to seal PartialFace payloads in PF02 envelopes.
+         */
+        get: operations["get_payload_key"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1137,6 +1178,31 @@ export interface components {
             /** Scopes Allowed */
             scopes_allowed: string[];
         };
+        /** PayloadKeyResponse */
+        PayloadKeyResponse: {
+            /**
+             * Key Id
+             * @description Active master key identifier
+             */
+            key_id: string;
+            /**
+             * Public Key Hex
+             * @description Raw X25519 public key in hexadecimal (32 bytes / 64 hex chars)
+             */
+            public_key_hex: string;
+            /**
+             * Algorithm
+             * @description Key agreement and AEAD algorithm suite
+             * @default X25519-HKDF-AES256GCM
+             */
+            algorithm: string;
+            /**
+             * Format
+             * @description Application layer envelope format version
+             * @default PF02
+             */
+            format: string;
+        };
         /**
          * ReadyResponse
          * @description Readiness probe response.
@@ -1159,6 +1225,33 @@ export interface components {
             store_connected: boolean;
             /** Enrolled Identities */
             enrolled_identities: number;
+        };
+        /** SecurityStatusResponse */
+        SecurityStatusResponse: {
+            /**
+             * Tls Min Version
+             * @default TLSv1.2
+             */
+            tls_min_version: string;
+            /** Active Master Key Id */
+            active_master_key_id: string;
+            /**
+             * Key Hierarchy Configured
+             * @default true
+             */
+            key_hierarchy_configured: boolean;
+            /** Template Protection */
+            template_protection: {
+                [key: string]: unknown;
+            };
+            /** Payload Sealing */
+            payload_sealing: {
+                [key: string]: unknown;
+            };
+            /** Anomaly Detector */
+            anomaly_detector: {
+                [key: string]: unknown;
+            };
         };
         /** SystemSettingsResponse */
         SystemSettingsResponse: {
@@ -2066,9 +2159,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody: {
+        requestBody?: {
             content: {
-                "application/json": components["schemas"]["DeviceActionRequest"];
+                "application/json": components["schemas"]["DeviceActionRequest"] | null;
             };
         };
         responses: {
@@ -2136,9 +2229,9 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody: {
+        requestBody?: {
             content: {
-                "application/json": components["schemas"]["DeviceActionRequest"];
+                "application/json": components["schemas"]["DeviceActionRequest"] | null;
             };
         };
         responses: {
@@ -2615,6 +2708,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SystemStatusResponse"];
+                };
+            };
+        };
+    };
+    admin_security_status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecurityStatusResponse"];
+                };
+            };
+        };
+    };
+    get_payload_key: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayloadKeyResponse"];
                 };
             };
         };

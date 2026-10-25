@@ -146,7 +146,9 @@ def test_naive_frequency_inversion_attempt(tmp_path):
     B = Y + 1.77200 * (Cb - 128.0)
 
     rgb_reconstructed_896 = np.stack([R, G, B], axis=-1)
-    rgb_reconstructed = cv2.resize(rgb_reconstructed_896, (112, 112), interpolation=cv2.INTER_LINEAR)
+    rgb_reconstructed = cv2.resize(
+        rgb_reconstructed_896, (112, 112), interpolation=cv2.INTER_LINEAR
+    )
     rgb_reconstructed = np.clip(rgb_reconstructed, 0, 255).astype(np.uint8)
 
     # Save to tmp_path for inspection

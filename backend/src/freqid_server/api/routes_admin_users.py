@@ -10,7 +10,6 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy import desc, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from freqid_server.api.routes_admin_auth import get_current_admin
 from freqid_server.api.schemas import UserExportResponse, UserStatusResponse
@@ -26,7 +25,6 @@ from freqid_server.auth.permissions import (
 from freqid_server.errors import (
     InsufficientScopeError,
     UserNotFoundError,
-    ValidationError,
 )
 from freqid_server.storage.models import TemplateOrm, UserOrm
 
@@ -34,10 +32,13 @@ router = APIRouter(prefix="/v1/admin/users", tags=["Admin Users"])
 
 
 def require_admin_permission(perm: str):
-    async def _checker(admin: AuthenticatedPrincipal = Depends(get_current_admin)) -> AuthenticatedPrincipal:
+    async def _checker(
+        admin: AuthenticatedPrincipal = Depends(get_current_admin),
+    ) -> AuthenticatedPrincipal:
         if not admin.has_scope(perm):
             raise InsufficientScopeError(f"Admin lacks required permission: '{perm}'.")
         return admin
+
     return _checker
 
 
@@ -95,7 +96,7 @@ async def get_user(
 
     async with session_factory() as session:
         # Check by external_id or UUID
-        stmt = select(UserOrm).where((UserOrm.external_id == user_id))
+        stmt = select(UserOrm).where(UserOrm.external_id == user_id)
         res = await session.execute(stmt)
         user = res.scalars().first()
 
@@ -132,7 +133,9 @@ async def get_user(
         }
 
 
-@router.post("/{user_id}/disable", response_model=UserStatusResponse, operation_id="admin_disable_user")
+@router.post(
+    "/{user_id}/disable", response_model=UserStatusResponse, operation_id="admin_disable_user"
+)
 async def disable_user(
     user_id: str,
     request: Request,
@@ -144,7 +147,9 @@ async def disable_user(
     return UserStatusResponse(status="disabled", user_id=user_id, message="Identity disabled.")
 
 
-@router.post("/{user_id}/enable", response_model=UserStatusResponse, operation_id="admin_enable_user")
+@router.post(
+    "/{user_id}/enable", response_model=UserStatusResponse, operation_id="admin_enable_user"
+)
 async def enable_user(
     user_id: str,
     request: Request,
@@ -156,7 +161,9 @@ async def enable_user(
     return UserStatusResponse(status="active", user_id=user_id, message="Identity enabled.")
 
 
-@router.get("/{user_id}/export", response_model=UserExportResponse, operation_id="admin_export_user")
+@router.get(
+    "/{user_id}/export", response_model=UserExportResponse, operation_id="admin_export_user"
+)
 async def export_user(
     user_id: str,
     request: Request,

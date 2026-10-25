@@ -6,7 +6,6 @@ test_payload_envelope.py: Comprehensive test suite for PF02 payload sealing and 
 from __future__ import annotations
 
 import os
-import time
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -17,7 +16,6 @@ from freqid_server.crypto.payload_envelope import (
     DeviceBindingError,
     EnvelopeTamperingError,
     ExpiredPayloadError,
-    PayloadEnvelopeError,
     ReplayAttackError,
     ReplayDetector,
     is_sealed_payload,

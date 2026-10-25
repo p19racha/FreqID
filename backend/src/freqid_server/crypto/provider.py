@@ -60,7 +60,9 @@ class KeyProvider(ABC):
         try:
             return aes_key_unwrap(kek, wrapped_dek)
         except InvalidUnwrap as e:
-            raise ValueError(f"Failed to unwrap DEK with key_id '{key_id}': integrity check failed.") from e
+            raise ValueError(
+                f"Failed to unwrap DEK with key_id '{key_id}': integrity check failed."
+            ) from e
 
     def derive_purpose_key(self, purpose: str, key_id: str | None = None) -> bytes:
         """Derives a 256-bit purpose-specific subkey using HKDF-SHA256."""

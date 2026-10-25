@@ -17,6 +17,7 @@ from freqid_client.detect import FaceDetection
 @dataclass(frozen=True)
 class QualityReport:
     """Diagnostic report detailing the evaluation outcome of the quality gate."""
+
     passed: bool
     failure_code: str | None
     failure_message: str | None

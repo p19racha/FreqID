@@ -19,6 +19,7 @@ class ServerConfig(BaseSettings):
     Central configuration for freqid-server.
     Precedence: explicit kwargs > FREQID_SERVER_* environment variables > YAML > defaults.
     """
+
     model_config = SettingsConfigDict(
         env_prefix="FREQID_SERVER_",
         env_file=".env",
@@ -28,7 +29,9 @@ class ServerConfig(BaseSettings):
     # Server Network Binding
     host: str = Field(default="0.0.0.0", description="Network interface to bind")
     port: int = Field(default=8000, description="Network port to bind")
-    environment: str = Field(default="development", description="'development', 'test', or 'production'")
+    environment: str = Field(
+        default="development", description="'development', 'test', or 'production'"
+    )
 
     # Model & Inference Settings
     model_path: str = Field(
@@ -232,4 +235,3 @@ def load_config(config_path: str | Path | None = None, **overrides: Any) -> Serv
                 setattr(cfg, k, v)
         return cfg
     return ServerConfig(**overrides)
-

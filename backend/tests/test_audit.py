@@ -52,10 +52,14 @@ MAINT_DB_URL = os.environ.get(
 async def clean_audit_db():
     admin_engine = create_async_engine(ADMIN_DB_URL, echo=False)
     async with admin_engine.begin() as conn:
-        await conn.execute(text("TRUNCATE TABLE audit_events, templates, enrollment_sessions, users CASCADE;"))
+        await conn.execute(
+            text("TRUNCATE TABLE audit_events, templates, enrollment_sessions, users CASCADE;")
+        )
     yield
     async with admin_engine.begin() as conn:
-        await conn.execute(text("TRUNCATE TABLE audit_events, templates, enrollment_sessions, users CASCADE;"))
+        await conn.execute(
+            text("TRUNCATE TABLE audit_events, templates, enrollment_sessions, users CASCADE;")
+        )
     await admin_engine.dispose()
 
 
@@ -186,17 +190,13 @@ async def test_append_only_role_permissions(clean_audit_db):
     with pytest.raises(ProgrammingError):
         async with app_session_factory() as session, session.begin():
             await session.execute(
-                update(AuditEventOrm)
-                .where(AuditEventOrm.id == ev_id)
-                .values(decision="tampered")
+                update(AuditEventOrm).where(AuditEventOrm.id == ev_id).values(decision="tampered")
             )
 
     # 4. App role CANNOT delete
     with pytest.raises(ProgrammingError):
         async with app_session_factory() as session, session.begin():
-            await session.execute(
-                text("DELETE FROM audit_events WHERE id = :id"), {"id": ev_id}
-            )
+            await session.execute(text("DELETE FROM audit_events WHERE id = :id"), {"id": ev_id})
 
     await app_engine.dispose()
     await admin_engine.dispose()

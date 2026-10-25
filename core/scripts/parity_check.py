@@ -57,7 +57,11 @@ def calculate_roc(thresholds, embeddings1, embeddings2, actual_issame, nrof_fold
         for threshold_idx, threshold in enumerate(thresholds):
             predict_issame = np.less(dist[train_set], threshold)
             true_pos = np.sum(np.logical_and(predict_issame, actual_issame[train_set]))
-            true_neg = np.sum(np.logical_and(np.logical_not(predict_issame), np.logical_not(actual_issame[train_set])))
+            true_neg = np.sum(
+                np.logical_and(
+                    np.logical_not(predict_issame), np.logical_not(actual_issame[train_set])
+                )
+            )
             acc_train[threshold_idx] = float(true_pos + true_neg) / len(train_set)
 
         best_idx = np.argmax(acc_train)
@@ -65,14 +69,18 @@ def calculate_roc(thresholds, embeddings1, embeddings2, actual_issame, nrof_fold
 
         predict_issame = np.less(dist[test_set], best_thresholds[fold_idx])
         true_pos = np.sum(np.logical_and(predict_issame, actual_issame[test_set]))
-        true_neg = np.sum(np.logical_and(np.logical_not(predict_issame), np.logical_not(actual_issame[test_set])))
+        true_neg = np.sum(
+            np.logical_and(np.logical_not(predict_issame), np.logical_not(actual_issame[test_set]))
+        )
         accuracy[fold_idx] = float(true_pos + true_neg) / len(test_set)
 
     return np.mean(accuracy), np.mean(best_thresholds)
 
 
 def run_parity_check():
-    ckpt_path = os.path.join(REPO_ROOT, "research", "outputs", "checkpoints", "partialface_ir_18_epoch5.pth")
+    ckpt_path = os.path.join(
+        REPO_ROOT, "research", "outputs", "checkpoints", "partialface_ir_18_epoch5.pth"
+    )
     lfw_bin_path = os.path.join(REPO_ROOT, "data", "val", "lfw.bin")
     log_file = os.path.join(REPO_ROOT, "core", "scripts", "parity_results.log")
 
@@ -123,19 +131,27 @@ def run_parity_check():
 
                 with torch.inference_mode():
                     res_raw_emb = research_model(research_freq)
-                    res_emb = (res_raw_emb / torch.norm(res_raw_emb, p=2, dim=1, keepdim=True)).numpy()[0]
+                    res_emb = (
+                        res_raw_emb / torch.norm(res_raw_emb, p=2, dim=1, keepdim=True)
+                    ).numpy()[0]
 
                 # B. freqid_core pipeline
-                core_freq_tensor = image_to_partial_frequency(img, subset_index=subset_idx, perm_index=perm_idx)
+                core_freq_tensor = image_to_partial_frequency(
+                    img, subset_index=subset_idx, perm_index=perm_idx
+                )
                 core_freq = core_freq_tensor.unsqueeze(0).numpy()
 
-                payload = PartialFacePayload(core_freq_tensor.numpy(), subset_index=subset_idx, perm_index=perm_idx)
+                payload = PartialFacePayload(
+                    core_freq_tensor.numpy(), subset_index=subset_idx, perm_index=perm_idx
+                )
                 core_emb = core_embedder.embed(payload)
 
                 # Comparisons
                 t_diff = float(np.max(np.abs(research_freq.numpy() - core_freq)))
                 e_diff = float(np.max(np.abs(res_emb - core_emb)))
-                cos_sim = float(np.dot(res_emb, core_emb) / (np.linalg.norm(res_emb) * np.linalg.norm(core_emb)))
+                cos_sim = float(
+                    np.dot(res_emb, core_emb) / (np.linalg.norm(res_emb) * np.linalg.norm(core_emb))
+                )
 
                 transform_diffs.append(t_diff)
                 emb_diffs.append(e_diff)

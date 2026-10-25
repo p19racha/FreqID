@@ -8,9 +8,7 @@ from __future__ import annotations
 
 import base64
 import concurrent.futures
-import json
 import os
-import secrets
 import socket
 import stat
 import tempfile
@@ -20,25 +18,20 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-import freqid_core as fq
 import httpx
 import numpy as np
 import pytest
 import uvicorn
+from freqid_client.auth import DeviceSignatureAuthenticator, pair_device
+from freqid_client.transport import FreqIDTransport
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from freqid_client.auth import DeviceSignatureAuthenticator, pair_device
-from freqid_client.transport import FreqIDTransport
-from freqid_server.audit.postgres import PostgresAuditSink
 from freqid_server.auth.passwords import hash_password
 from freqid_server.auth.tokens import create_access_token
 from freqid_server.config import ServerConfig
-from freqid_server.crypto.envelope import TemplateEncryptor
-from freqid_server.crypto.provider import EnvOrFileKeyProvider
 from freqid_server.main import create_app
 from freqid_server.storage.models import AdminUserOrm
-from freqid_server.storage.postgres import PostgreSQLTemplateStore
 
 DEV_DB_URL = os.environ.get(
     "FREQID_TEST_DB_URL",
@@ -62,15 +55,19 @@ def live_server():
     """Starts a live FreqID server instance on a background thread with real PostgreSQL persistence."""
     # Clean DB
     import asyncio
+
     async def truncate():
         admin_engine = create_async_engine(ADMIN_DB_URL, echo=False)
         async with admin_engine.begin() as conn:
-            await conn.execute(text(
-                "TRUNCATE TABLE audit_events, templates, enrollment_sessions, users, "
-                "device_heartbeats, devices, pairing_tokens, admin_refresh_tokens, "
-                "admin_users, system_settings CASCADE;"
-            ))
+            await conn.execute(
+                text(
+                    "TRUNCATE TABLE audit_events, templates, enrollment_sessions, users, "
+                    "device_heartbeats, devices, pairing_tokens, admin_refresh_tokens, "
+                    "admin_users, system_settings CASCADE;"
+                )
+            )
         await admin_engine.dispose()
+
     asyncio.run(truncate())
 
     port = get_free_port()
@@ -93,6 +90,7 @@ def live_server():
 
     # Seed Admin User in PostgreSQL
     admin_id = uuid.uuid4()
+
     async def seed():
         engine = create_async_engine(DEV_DB_URL, echo=False)
         session_factory = async_sessionmaker(engine, expire_on_commit=False)
@@ -108,6 +106,7 @@ def live_server():
             session.add(adm)
             await session.commit()
         await engine.dispose()
+
     asyncio.run(seed())
 
     admin_token = create_access_token(
@@ -117,7 +116,9 @@ def live_server():
         secret_key=cfg.master_key,
     )
 
-    server_config = uvicorn.Config(app=app, host="127.0.0.1", port=port, log_level="warning", loop="asyncio")
+    server_config = uvicorn.Config(
+        app=app, host="127.0.0.1", port=port, log_level="warning", loop="asyncio"
+    )
     server = uvicorn.Server(server_config)
 
     thread = threading.Thread(target=server.run, daemon=True)
@@ -210,29 +211,41 @@ def test_real_client_e2e_lifecycle(live_server, sample_payload_bytes):
                 assert verify_res.get("is_match") is True
 
                 # 5. Revocation Lifecycle: Suspend device
-                r_suspend = client.post(f"/v1/admin/devices/{device_id}/suspend", headers=admin_headers)
+                r_suspend = client.post(
+                    f"/v1/admin/devices/{device_id}/suspend", headers=admin_headers
+                )
                 assert r_suspend.status_code == 200
 
                 # Verification must now immediately fail with 403 DeviceSuspended
                 with pytest.raises(Exception) as exc_info:
-                    transport.verify(claimed_identity="alice_smith", payload_bytes=sample_payload_bytes)
+                    transport.verify(
+                        claimed_identity="alice_smith", payload_bytes=sample_payload_bytes
+                    )
                 assert "403" in str(exc_info.value) or "DEVICE_SUSPENDED" in str(exc_info.value)
 
                 # 6. Resume device
-                r_resume = client.post(f"/v1/admin/devices/{device_id}/resume", headers=admin_headers)
+                r_resume = client.post(
+                    f"/v1/admin/devices/{device_id}/resume", headers=admin_headers
+                )
                 assert r_resume.status_code == 200
 
                 # Verification succeeds again
-                verify_res2 = transport.verify(claimed_identity="alice_smith", payload_bytes=sample_payload_bytes)
+                verify_res2 = transport.verify(
+                    claimed_identity="alice_smith", payload_bytes=sample_payload_bytes
+                )
                 assert verify_res2.get("is_match") is True
 
                 # 7. Permanent revocation
-                r_revoke = client.post(f"/v1/admin/devices/{device_id}/revoke", headers=admin_headers)
+                r_revoke = client.post(
+                    f"/v1/admin/devices/{device_id}/revoke", headers=admin_headers
+                )
                 assert r_revoke.status_code == 200
 
                 # Verification immediately fails with 403 DeviceRevoked
                 with pytest.raises(Exception) as exc_info:
-                    transport.verify(claimed_identity="alice_smith", payload_bytes=sample_payload_bytes)
+                    transport.verify(
+                        claimed_identity="alice_smith", payload_bytes=sample_payload_bytes
+                    )
                 assert "403" in str(exc_info.value) or "DEVICE_REVOKED" in str(exc_info.value)
 
 
@@ -280,35 +293,48 @@ def test_authentication_latency_and_concurrency_benchmarks(live_server, sample_p
                 sig_latencies = []
                 for _ in range(50):
                     t0 = time.perf_counter()
-                    _ = auth.get_auth_headers(method="POST", path="/v1/verify", body=sample_payload_bytes)
+                    _ = auth.get_auth_headers(
+                        method="POST", path="/v1/verify", body=sample_payload_bytes
+                    )
                     sig_latencies.append((time.perf_counter() - t0) * 1000.0)
 
                 p50_sig = np.percentile(sig_latencies, 50)
                 p95_sig = np.percentile(sig_latencies, 95)
-                print(f"\n[BENCHMARK] Client Ed25519 Sign Latency: p50={p50_sig:.3f}ms, p95={p95_sig:.3f}ms")
+                print(
+                    f"\n[BENCHMARK] Client Ed25519 Sign Latency: p50={p50_sig:.3f}ms, p95={p95_sig:.3f}ms"
+                )
                 assert p95_sig < 5.0, f"Ed25519 sign latency excessive: {p95_sig:.2f}ms"
 
                 # Benchmark 2: End-to-end Verification latency under sequential load (c=1)
                 seq_latencies = []
                 for _ in range(25):
                     t0 = time.perf_counter()
-                    res = transport.verify(claimed_identity="bench_user", payload_bytes=sample_payload_bytes)
+                    res = transport.verify(
+                        claimed_identity="bench_user", payload_bytes=sample_payload_bytes
+                    )
                     seq_latencies.append((time.perf_counter() - t0) * 1000.0)
                     assert res.get("is_match") is True
 
                 p50_seq = np.percentile(seq_latencies, 50)
                 p95_seq = np.percentile(seq_latencies, 95)
-                print(f"[BENCHMARK] Sequential Verify (c=1): p50={p50_seq:.2f}ms, p95={p95_seq:.2f}ms")
+                print(
+                    f"[BENCHMARK] Sequential Verify (c=1): p50={p50_seq:.2f}ms, p95={p95_seq:.2f}ms"
+                )
 
                 # Benchmark 3: Concurrency load testing at c=8 and c=32
                 for concurrency in (8, 32):
+
                     def send_one():
                         t_start = time.perf_counter()
-                        headers = auth.get_auth_headers(method="POST", path="/v1/verify", body=sample_payload_bytes)
+                        headers = auth.get_auth_headers(
+                            method="POST", path="/v1/verify", body=sample_payload_bytes
+                        )
                         headers["Content-Type"] = "application/vnd.freqid.payload"
                         headers["X-Claimed-Identity"] = "bench_user"
                         with httpx.Client(base_url=server_url, timeout=10.0) as bench_c:
-                            resp = bench_c.post("/v1/verify", content=sample_payload_bytes, headers=headers)
+                            resp = bench_c.post(
+                                "/v1/verify", content=sample_payload_bytes, headers=headers
+                            )
                         latency = (time.perf_counter() - t_start) * 1000.0
                         return resp.status_code, latency
 
@@ -317,7 +343,7 @@ def test_authentication_latency_and_concurrency_benchmarks(live_server, sample_p
                         results = [f.result() for f in futures]
 
                     statuses = [s for s, _ in results]
-                    latencies = [l for _, l in results]
+                    latencies = [lat for _, lat in results]
 
                     p50 = np.percentile(latencies, 50)
                     p95 = np.percentile(latencies, 95)
@@ -328,4 +354,6 @@ def test_authentication_latency_and_concurrency_benchmarks(live_server, sample_p
                         f"Success Rate={statuses.count(200)}/{concurrency}, "
                         f"p50={p50:.2f}ms, p95={p95:.2f}ms, Throughput={rps:.1f} req/s"
                     )
-                    assert statuses.count(200) == concurrency, f"Failures under load c={concurrency}: {statuses}"
+                    assert statuses.count(200) == concurrency, (
+                        f"Failures under load c={concurrency}: {statuses}"
+                    )

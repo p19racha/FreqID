@@ -67,16 +67,12 @@ class PartialFacePayload:
         # Normalize 3D tensor (27, 112, 112) to 4D batch (1, 27, 112, 112) internally
         if data.ndim == 3:
             if data.shape != (27, 112, 112):
-                raise ShapeMismatchError(
-                    f"Expected shape (27, 112, 112), got {data.shape}"
-                )
+                raise ShapeMismatchError(f"Expected shape (27, 112, 112), got {data.shape}")
             self._data = np.ascontiguousarray(data[np.newaxis, ...])
             self._is_single = True
         elif data.ndim == 4:
             if data.shape[1:] != (27, 112, 112):
-                raise ShapeMismatchError(
-                    f"Expected shape (B, 27, 112, 112), got {data.shape}"
-                )
+                raise ShapeMismatchError(f"Expected shape (B, 27, 112, 112), got {data.shape}")
             self._data = np.ascontiguousarray(data)
             self._is_single = False
         else:
@@ -85,9 +81,7 @@ class PartialFacePayload:
             )
 
         if self._data.dtype not in (np.float32, np.float16):
-            raise TypeError(
-                f"Payload dtype must be float32 or float16, got {self._data.dtype}"
-            )
+            raise TypeError(f"Payload dtype must be float32 or float16, got {self._data.dtype}")
 
         if not np.isfinite(self._data).all():
             raise InvalidPayloadError("Payload contains non-finite values (NaN or Inf)")
@@ -205,7 +199,9 @@ class PartialFacePayload:
         ) = struct.unpack(HEADER_FORMAT, raw_bytes[:HEADER_SIZE])
 
         if magic != MAGIC_BYTES:
-            raise InvalidPayloadError(f"Invalid magic bytes: expected {MAGIC_BYTES!r}, got {magic!r}")
+            raise InvalidPayloadError(
+                f"Invalid magic bytes: expected {MAGIC_BYTES!r}, got {magic!r}"
+            )
 
         if version != PAYLOAD_VERSION:
             raise InvalidPayloadError(f"Unsupported payload version: {version}")
@@ -247,7 +243,9 @@ class PartialFacePayload:
                 f"Decompressed byte length {len(uncompressed_bytes)} does not match expected {expected_bytes}"
             )
 
-        array = np.frombuffer(uncompressed_bytes, dtype=dtype).reshape((batch_size, channels, height, width))
+        array = np.frombuffer(uncompressed_bytes, dtype=dtype).reshape(
+            (batch_size, channels, height, width)
+        )
 
         # Check for NaNs and Infs
         if not np.isfinite(array).all():

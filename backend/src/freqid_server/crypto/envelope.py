@@ -70,7 +70,9 @@ class TemplateEncryptor:
         nonce = os.urandom(12)
 
         # 2. Authenticated Additional Data binding
-        aad = self.build_aad(user_id=user_id, model_version=model_version, format_version=format_version)
+        aad = self.build_aad(
+            user_id=user_id, model_version=model_version, format_version=format_version
+        )
 
         # 3. Encrypt embedding vector with DEK
         aesgcm = AESGCM(dek)

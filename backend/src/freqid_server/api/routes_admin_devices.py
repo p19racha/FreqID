@@ -14,7 +14,6 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy import delete, desc, select, update
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from freqid_server.api.routes_admin_auth import get_current_admin
 from freqid_server.api.schemas import (
@@ -39,7 +38,6 @@ from freqid_server.auth.permissions import (
     PERM_DEVICE_UPDATE_SCOPES,
 )
 from freqid_server.errors import (
-    AuthenticationError,
     InsufficientScopeError,
     ValidationError,
 )
@@ -53,10 +51,13 @@ router = APIRouter(prefix="/v1/admin/devices", tags=["Admin Devices"])
 
 
 def require_admin_permission(perm: str):
-    async def _checker(admin: AuthenticatedPrincipal = Depends(get_current_admin)) -> AuthenticatedPrincipal:
+    async def _checker(
+        admin: AuthenticatedPrincipal = Depends(get_current_admin),
+    ) -> AuthenticatedPrincipal:
         if not admin.has_scope(perm):
             raise InsufficientScopeError(f"Admin lacks required permission: '{perm}'.")
         return admin
+
     return _checker
 
 

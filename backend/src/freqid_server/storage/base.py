@@ -15,17 +15,20 @@ import numpy as np
 @dataclass(frozen=True)
 class EnrolledTemplate:
     """Represents a persisted biometric face template."""
+
     user_id: str
     template_id: str
-    embedding: np.ndarray             # 512-D float32 L2-normalized vector
-    model_version: str                # e.g., "v1.0-ir18"
-    enrolled_at_iso: str              # ISO-8601 string
-    frames_used: int                  # Number of partial frequency captures averaged
+    embedding: np.ndarray  # 512-D float32 L2-normalized vector
+    model_version: str  # e.g., "v1.0-ir18"
+    enrolled_at_iso: str  # ISO-8601 string
+    frames_used: int  # Number of partial frequency captures averaged
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if self.embedding.shape != (512,):
-            raise ValueError(f"Template embedding must have shape (512,), got {self.embedding.shape}")
+            raise ValueError(
+                f"Template embedding must have shape (512,), got {self.embedding.shape}"
+            )
         if self.embedding.dtype != np.float32:
             object.__setattr__(self, "embedding", self.embedding.astype(np.float32))
 
@@ -38,7 +41,9 @@ class TemplateStore(ABC):
     """
 
     @abstractmethod
-    async def put_template(self, template: EnrolledTemplate, expected_version: int | None = None) -> None:
+    async def put_template(
+        self, template: EnrolledTemplate, expected_version: int | None = None
+    ) -> None:
         """Stores or replaces a template record for template.user_id, with optional optimistic lock version."""
 
     @abstractmethod

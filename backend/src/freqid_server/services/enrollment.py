@@ -80,9 +80,7 @@ class EnrollmentService:
                 payload = fq.PartialFacePayload.from_bytes(chunk)
                 payloads.append(payload)
             except Exception as e:
-                raise InvalidPayloadError(
-                    f"Failed to decode framed enrollment payload: {e}"
-                ) from e
+                raise InvalidPayloadError(f"Failed to decode framed enrollment payload: {e}") from e
 
             if len(payloads) > max_frames:
                 raise InvalidPayloadError(
@@ -172,10 +170,7 @@ class EnrollmentService:
 
         # 6. Duplicate face check against existing gallery
         duplicate_warning: str | None = None
-        if (
-            self.config.enroll_duplicate_check_policy != "disabled"
-            and self.gallery.count > 0
-        ):
+        if self.config.enroll_duplicate_check_policy != "disabled" and self.gallery.count > 0:
             dup_matches = self.gallery.search(
                 query_embedding=avg_emb,
                 top_k=1,

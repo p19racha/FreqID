@@ -13,8 +13,12 @@ router = APIRouter(tags=["Security & Key Management"])
 
 class PayloadKeyResponse(BaseModel):
     key_id: str = Field(..., description="Active master key identifier")
-    public_key_hex: str = Field(..., description="Raw X25519 public key in hexadecimal (32 bytes / 64 hex chars)")
-    algorithm: str = Field(default="X25519-HKDF-AES256GCM", description="Key agreement and AEAD algorithm suite")
+    public_key_hex: str = Field(
+        ..., description="Raw X25519 public key in hexadecimal (32 bytes / 64 hex chars)"
+    )
+    algorithm: str = Field(
+        default="X25519-HKDF-AES256GCM", description="Key agreement and AEAD algorithm suite"
+    )
     format: str = Field(default="PF02", description="Application layer envelope format version")
 
 

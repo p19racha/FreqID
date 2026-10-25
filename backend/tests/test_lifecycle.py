@@ -44,10 +44,14 @@ TEST_MASTER_KEY = b"01234567890123456789012345678901"
 async def clean_postgres_db():
     admin_engine = create_async_engine(ADMIN_DB_URL, echo=False)
     async with admin_engine.begin() as conn:
-        await conn.execute(text("TRUNCATE TABLE audit_events, templates, enrollment_sessions, users CASCADE;"))
+        await conn.execute(
+            text("TRUNCATE TABLE audit_events, templates, enrollment_sessions, users CASCADE;")
+        )
     yield
     async with admin_engine.begin() as conn:
-        await conn.execute(text("TRUNCATE TABLE audit_events, templates, enrollment_sessions, users CASCADE;"))
+        await conn.execute(
+            text("TRUNCATE TABLE audit_events, templates, enrollment_sessions, users CASCADE;")
+        )
     await admin_engine.dispose()
 
 
@@ -152,7 +156,9 @@ async def test_re_enrollment_flag_enforcement(api_client: httpx.AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_duplicate_face_detection_warn_and_block(app_with_postgres, api_client: httpx.AsyncClient):
+async def test_duplicate_face_detection_warn_and_block(
+    app_with_postgres, api_client: httpx.AsyncClient
+):
     body = make_payload_stream(num_frames=3, seed=99)
 
     # 1. Enroll user_alpha
@@ -243,7 +249,9 @@ async def test_user_disable_enable_lifecycle(app_with_postgres, api_client: http
 
 
 @pytest.mark.asyncio
-async def test_gdpr_right_to_be_forgotten_complete_deletion(clean_postgres_db, api_client: httpx.AsyncClient):
+async def test_gdpr_right_to_be_forgotten_complete_deletion(
+    clean_postgres_db, api_client: httpx.AsyncClient
+):
     body = make_payload_stream(num_frames=3, seed=77)
 
     # 1. Enroll user
@@ -279,7 +287,9 @@ async def test_gdpr_right_to_be_forgotten_complete_deletion(clean_postgres_db, a
     admin_engine = create_async_engine(ADMIN_DB_URL, echo=False)
     session_factory = async_sessionmaker(admin_engine, expire_on_commit=False)
     async with session_factory() as session:
-        u_res = await session.execute(select(UserOrm).where(UserOrm.external_id == "user_gdpr_target"))
+        u_res = await session.execute(
+            select(UserOrm).where(UserOrm.external_id == "user_gdpr_target")
+        )
         assert u_res.scalar_one_or_none() is None
 
         t_res = await session.execute(select(TemplateOrm))

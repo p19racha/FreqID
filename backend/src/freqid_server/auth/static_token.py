@@ -36,7 +36,9 @@ class StaticTokenAuthenticator(RequestAuthenticator):
                 "FREQID_SERVER_ALLOW_STATIC_TOKENS_IN_PRODUCTION is explicitly enabled."
             )
 
-    async def authenticate(self, request: Request, required_scope: str | None = None) -> AuthenticatedPrincipal:
+    async def authenticate(
+        self, request: Request, required_scope: str | None = None
+    ) -> AuthenticatedPrincipal:
         auth_header = request.headers.get("Authorization")
         device_id = request.headers.get("X-Device-ID", "unknown_device")
 

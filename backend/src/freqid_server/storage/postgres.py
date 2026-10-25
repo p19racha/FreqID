@@ -187,9 +187,7 @@ class PostgreSQLTemplateStore(TemplateStore):
             await session.delete(user)
             return True
 
-    async def list_templates(
-        self, model_version: str | None = None
-    ) -> list[EnrolledTemplate]:
+    async def list_templates(self, model_version: str | None = None) -> list[EnrolledTemplate]:
         """
         Streams and decrypts all active templates using keyset pagination.
         Avoids high memory pressure when loading large galleries.

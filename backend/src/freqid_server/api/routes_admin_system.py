@@ -14,7 +14,6 @@ from typing import Any
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy import desc, func, select, update
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from freqid_server.api.routes_admin_auth import get_current_admin
 from freqid_server.api.schemas import (
@@ -22,17 +21,16 @@ from freqid_server.api.schemas import (
     AdminSummary,
     AdminUpdateRequest,
     AuditQueryResponse,
+    SecurityStatusResponse,
     SystemSettingsResponse,
     SystemSettingsUpdateRequest,
     SystemStatusResponse,
-    SecurityStatusResponse,
 )
 from freqid_server.audit.base import AuditEvent
 from freqid_server.auth.base import AuthenticatedPrincipal
 from freqid_server.auth.passwords import hash_password, validate_password_policy
 from freqid_server.auth.permissions import (
     PERM_ADMIN_CREATE,
-    PERM_ADMIN_DISABLE,
     PERM_ADMIN_LIST,
     PERM_ADMIN_UNLOCK,
     PERM_ADMIN_UPDATE_ROLE,
@@ -43,7 +41,6 @@ from freqid_server.auth.permissions import (
     PERM_SYSTEM_STATUS,
 )
 from freqid_server.errors import (
-    AuthenticationError,
     InsufficientScopeError,
     ValidationError,
 )
@@ -51,23 +48,26 @@ from freqid_server.storage.models import (
     AdminUserOrm,
     AuditEventOrm,
     DeviceOrm,
-    SystemSettingOrm,
 )
 
 router = APIRouter(prefix="/v1/admin", tags=["Admin System"])
 
 
 def require_admin_permission(perm: str):
-    async def _checker(admin: AuthenticatedPrincipal = Depends(get_current_admin)) -> AuthenticatedPrincipal:
+    async def _checker(
+        admin: AuthenticatedPrincipal = Depends(get_current_admin),
+    ) -> AuthenticatedPrincipal:
         if not admin.has_scope(perm):
             raise InsufficientScopeError(f"Admin lacks required permission: '{perm}'.")
         return admin
+
     return _checker
 
 
 # -------------------------------------------------------------------------
 # Admin User Management (Owner Only)
 # -------------------------------------------------------------------------
+
 
 @router.get("/admins", response_model=list[AdminSummary], operation_id="admin_list_admins")
 async def list_admins(
@@ -97,7 +97,9 @@ async def list_admins(
         ]
 
 
-@router.post("/admins", response_model=AdminSummary, status_code=201, operation_id="admin_create_admin")
+@router.post(
+    "/admins", response_model=AdminSummary, status_code=201, operation_id="admin_create_admin"
+)
 async def create_admin(
     payload: AdminCreateRequest,
     request: Request,
@@ -150,7 +152,9 @@ async def create_admin(
         )
 
 
-@router.patch("/admins/{admin_id}", response_model=dict[str, str], operation_id="admin_update_admin")
+@router.patch(
+    "/admins/{admin_id}", response_model=dict[str, str], operation_id="admin_update_admin"
+)
 async def update_admin(
     admin_id: uuid.UUID,
     payload: AdminUpdateRequest,
@@ -180,7 +184,9 @@ async def update_admin(
     return {"status": "updated", "admin_id": str(admin_id)}
 
 
-@router.post("/admins/{admin_id}/unlock", response_model=dict[str, str], operation_id="admin_unlock_admin")
+@router.post(
+    "/admins/{admin_id}/unlock", response_model=dict[str, str], operation_id="admin_unlock_admin"
+)
 async def unlock_admin(
     admin_id: uuid.UUID,
     request: Request,
@@ -212,6 +218,7 @@ async def unlock_admin(
 # -------------------------------------------------------------------------
 # Audit Querying and Export
 # -------------------------------------------------------------------------
+
 
 @router.get("/audit", response_model=AuditQueryResponse, operation_id="admin_query_audit")
 async def query_audit(
@@ -275,30 +282,34 @@ async def export_audit_csv(
 
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow([
-        "event_time",
-        "event_type",
-        "principal_type",
-        "principal_id",
-        "device_id",
-        "decision",
-        "score_bucket",
-        "request_id",
-        "model_version",
-    ])
+    writer.writerow(
+        [
+            "event_time",
+            "event_type",
+            "principal_type",
+            "principal_id",
+            "device_id",
+            "decision",
+            "score_bucket",
+            "request_id",
+            "model_version",
+        ]
+    )
 
     for r in rows:
-        writer.writerow([
-            r.event_time.isoformat(),
-            r.event_type,
-            r.principal_type,
-            r.principal_id or "",
-            str(r.device_id) if r.device_id else "",
-            r.decision,
-            r.score_bucket or "",
-            r.request_id,
-            r.model_version or "",
-        ])
+        writer.writerow(
+            [
+                r.event_time.isoformat(),
+                r.event_type,
+                r.principal_type,
+                r.principal_id or "",
+                str(r.device_id) if r.device_id else "",
+                r.decision,
+                r.score_bucket or "",
+                r.request_id,
+                r.model_version or "",
+            ]
+        )
 
     output.seek(0)
     return StreamingResponse(
@@ -311,6 +322,7 @@ async def export_audit_csv(
 # -------------------------------------------------------------------------
 # Settings and System Status
 # -------------------------------------------------------------------------
+
 
 @router.get("/settings", response_model=SystemSettingsResponse, operation_id="admin_get_settings")
 async def get_settings(
@@ -350,7 +362,9 @@ async def update_settings(
     if "enroll_duplicate_check_policy" in updates:
         pol = str(updates["enroll_duplicate_check_policy"]).lower()
         if pol not in ("disabled", "warn", "block"):
-            raise ValidationError("enroll_duplicate_check_policy must be 'disabled', 'warn', or 'block'.")
+            raise ValidationError(
+                "enroll_duplicate_check_policy must be 'disabled', 'warn', or 'block'."
+            )
         cfg.enroll_duplicate_check_policy = pol
 
     # Record audit event
@@ -371,7 +385,9 @@ async def update_settings(
     return {"status": "settings_updated"}
 
 
-@router.get("/system/status", response_model=SystemStatusResponse, operation_id="admin_system_status")
+@router.get(
+    "/system/status", response_model=SystemStatusResponse, operation_id="admin_system_status"
+)
 async def get_system_status(
     request: Request,
     admin: AuthenticatedPrincipal = Depends(require_admin_permission(PERM_SYSTEM_STATUS)),
@@ -387,7 +403,9 @@ async def get_system_status(
         queue_depth = inference_service._task_queue.qsize()
 
     audit_sink = getattr(request.app.state, "audit_sink", None)
-    audit_queue_size = audit_sink._queue.qsize() if audit_sink and hasattr(audit_sink, "_queue") else 0
+    audit_queue_size = (
+        audit_sink._queue.qsize() if audit_sink and hasattr(audit_sink, "_queue") else 0
+    )
 
     session_factory = getattr(request.app.state, "session_factory", None)
     device_counts = {"active": 0, "pending": 0, "suspended": 0, "revoked": 0}
@@ -410,7 +428,9 @@ async def get_system_status(
     )
 
 
-@router.get("/security/status", response_model=SecurityStatusResponse, operation_id="admin_security_status")
+@router.get(
+    "/security/status", response_model=SecurityStatusResponse, operation_id="admin_security_status"
+)
 async def get_security_status(
     request: Request,
     admin: AuthenticatedPrincipal = Depends(require_admin_permission(PERM_SYSTEM_STATUS)),
@@ -418,7 +438,9 @@ async def get_security_status(
     """Returns active cryptographic security posture, template protection state, and anomaly detector telemetry."""
     cfg = request.app.state.config
     key_provider = getattr(request.app.state, "key_provider", None)
-    active_key_id = key_provider.current_key_id() if key_provider else (cfg.active_key_id or "unknown")
+    active_key_id = (
+        key_provider.current_key_id() if key_provider else (cfg.active_key_id or "unknown")
+    )
 
     pub_hex = ""
     if key_provider is not None:
@@ -434,8 +456,11 @@ async def get_security_status(
 
     if session_factory is not None:
         from freqid_server.storage.models import TemplateOrm
+
         async with session_factory() as session:
-            stmt = select(TemplateOrm.format_version, func.count(TemplateOrm.id)).group_by(TemplateOrm.format_version)
+            stmt = select(TemplateOrm.format_version, func.count(TemplateOrm.id)).group_by(
+                TemplateOrm.format_version
+            )
             res = await session.execute(stmt)
             for f_ver, cnt in res.all():
                 format_counts[f_ver] = cnt
@@ -445,7 +470,9 @@ async def get_security_status(
     anomaly_stats = {
         "threshold": cfg.decision_threshold,
         "delta": 0.05,
-        "near_threshold_events": anomaly_det.stats.total_near_threshold_events if anomaly_det else 0,
+        "near_threshold_events": anomaly_det.stats.total_near_threshold_events
+        if anomaly_det
+        else 0,
         "anomalies_flagged": anomaly_det.stats.total_anomalies_flagged if anomaly_det else 0,
     }
 
@@ -468,4 +495,3 @@ async def get_security_status(
         },
         anomaly_detector=anomaly_stats,
     )
-

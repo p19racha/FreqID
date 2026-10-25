@@ -19,6 +19,7 @@ from freqid_core.errors import DimensionMismatchError
 @dataclass(frozen=True)
 class MatchResult:
     """Result of a 1:N biometric identification query."""
+
     target_id: str
     similarity: float
     is_match: bool
@@ -69,9 +70,7 @@ def cosine_similarity(
     # 2D batch vs 2D batch
     elif a.ndim == 2 and b.ndim == 2:
         if a.shape[0] != b.shape[0]:
-            raise DimensionMismatchError(
-                f"Batch sizes mismatch: {a.shape[0]} vs {b.shape[0]}"
-            )
+            raise DimensionMismatchError(f"Batch sizes mismatch: {a.shape[0]} vs {b.shape[0]}")
         norm_a = np.linalg.norm(a, axis=1)
         norm_b = np.linalg.norm(b, axis=1)
         norm_a = np.where(norm_a == 0, 1e-12, norm_a)

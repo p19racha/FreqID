@@ -72,7 +72,9 @@ class ReplayDetector:
         self._prune(now)
 
         if request_id in self._seen:
-            raise ReplayAttackError(f"Replay detected: request_id '{request_id}' has already been processed.")
+            raise ReplayAttackError(
+                f"Replay detected: request_id '{request_id}' has already been processed."
+            )
 
         if len(self._seen) >= self.max_entries:
             sorted_items = sorted(self._seen.items(), key=lambda kv: kv[1])
@@ -178,11 +180,16 @@ def seal_payload(
     if len(sig_bytes) > 255:
         raise ValueError("Signature exceeds 255 bytes")
 
-    header_prefix = struct.pack(
-        ">4sB",
-        MAGIC_V2,
-        len(key_id_encoded),
-    ) + key_id_encoded + ephemeral_pub_bytes + nonce
+    header_prefix = (
+        struct.pack(
+            ">4sB",
+            MAGIC_V2,
+            len(key_id_encoded),
+        )
+        + key_id_encoded
+        + ephemeral_pub_bytes
+        + nonce
+    )
 
     header_aad = struct.pack(">H", len(aad_bytes)) + aad_bytes
     header_sig = struct.pack(">B", len(sig_bytes)) + sig_bytes
@@ -199,7 +206,9 @@ def parse_envelope_header(envelope_bytes: bytes) -> tuple[SealedPayloadHeader, b
         raise PayloadEnvelopeError("Envelope buffer too short to contain valid PF02 structure.")
 
     if envelope_bytes[:4] != MAGIC_V2:
-        raise PayloadEnvelopeError(f"Invalid magic header: expected {MAGIC_V2!r}, got {envelope_bytes[:4]!r}")
+        raise PayloadEnvelopeError(
+            f"Invalid magic header: expected {MAGIC_V2!r}, got {envelope_bytes[:4]!r}"
+        )
 
     offset = 4
     key_id_len = envelope_bytes[offset]
@@ -280,7 +289,11 @@ def open_payload(
 
     # 2. Request ID matching
     envelope_request_id = aad_dict.get("request_id")
-    if expected_request_id is not None and envelope_request_id and envelope_request_id != expected_request_id:
+    if (
+        expected_request_id is not None
+        and envelope_request_id
+        and envelope_request_id != expected_request_id
+    ):
         raise DeviceBindingError(
             f"Request ID mismatch: envelope has '{envelope_request_id}', HTTP header has '{expected_request_id}'."
         )
@@ -311,7 +324,9 @@ def open_payload(
     # 5. Device signature verification
     if header.signature:
         if device_public_key is None:
-            raise EnvelopeTamperingError("Envelope contains device signature but no device public key provided.")
+            raise EnvelopeTamperingError(
+                "Envelope contains device signature but no device public key provided."
+            )
         signable = (
             MAGIC_V2
             + header.key_id.encode("ascii")
@@ -323,7 +338,9 @@ def open_payload(
         try:
             device_public_key.verify(header.signature, signable)
         except InvalidSignature as e:
-            raise EnvelopeTamperingError("Device signature verification failed: invalid signature.") from e
+            raise EnvelopeTamperingError(
+                "Device signature verification failed: invalid signature."
+            ) from e
     elif device_public_key is not None:
         raise EnvelopeTamperingError("Device signature required but envelope is unsigned.")
 
@@ -348,6 +365,8 @@ def open_payload(
     try:
         decrypted_payload = aesgcm.decrypt(header.nonce, ciphertext_with_tag, header.aad_bytes)
     except InvalidTag as e:
-        raise EnvelopeTamperingError("Payload decryption failed: AEAD authentication tag mismatch.") from e
+        raise EnvelopeTamperingError(
+            "Payload decryption failed: AEAD authentication tag mismatch."
+        ) from e
 
     return decrypted_payload, aad_dict

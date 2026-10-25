@@ -9,6 +9,7 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class TransformConfig:
     """Configuration for client-side frequency transform, pruning, and sampling."""
+
     image_size: tuple[int, int] = (112, 112)
     ratio: int = 8
     block_size: int = 8
@@ -36,6 +37,7 @@ class TransformConfig:
 @dataclass(frozen=True)
 class ModelConfig:
     """Configuration for PartialFace backbone model."""
+
     backbone: str = "IR_18"
     input_channels: int = 27
     embedding_dim: int = 512
@@ -45,6 +47,7 @@ class ModelConfig:
 @dataclass(frozen=True)
 class InferenceConfig:
     """Runtime configuration for inference execution."""
+
     backend: str = "torch"
     device: str = "cpu"
     batch_size: int = 32

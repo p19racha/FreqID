@@ -251,14 +251,16 @@ async def export_user_endpoint(
                 )
                 res_ev = await session.execute(stmt_ev)
                 for ev in res_ev.scalars():
-                    audit_records.append({
-                        "event_id": str(ev.id),
-                        "event_type": ev.event_type,
-                        "event_time": ev.event_time.isoformat(),
-                        "decision": ev.decision,
-                        "score_bucket": ev.score_bucket,
-                        "request_id": ev.request_id,
-                    })
+                    audit_records.append(
+                        {
+                            "event_id": str(ev.id),
+                            "event_type": ev.event_type,
+                            "event_time": ev.event_time.isoformat(),
+                            "decision": ev.decision,
+                            "score_bucket": ev.score_bucket,
+                            "request_id": ev.request_id,
+                        }
+                    )
 
     return UserExportResponse(
         user_id=user_id,

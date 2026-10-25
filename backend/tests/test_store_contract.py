@@ -67,17 +67,23 @@ async def template_store(request) -> TemplateStore:
         session_factory = async_sessionmaker(app_engine, expire_on_commit=False)
         key_provider = EnvOrFileKeyProvider(default_key=TEST_MASTER_KEY)
         encryptor = TemplateEncryptor(key_provider)
-        store = PostgreSQLTemplateStore(session_factory=session_factory, encryptor=encryptor, batch_size=2)
+        store = PostgreSQLTemplateStore(
+            session_factory=session_factory, encryptor=encryptor, batch_size=2
+        )
 
         # Truncate tables before test for clean isolation using admin role
         async with admin_engine.begin() as conn:
-            await conn.execute(text("TRUNCATE TABLE audit_events, templates, enrollment_sessions, users CASCADE;"))
+            await conn.execute(
+                text("TRUNCATE TABLE audit_events, templates, enrollment_sessions, users CASCADE;")
+            )
 
         yield store
 
         # Cleanup after test
         async with admin_engine.begin() as conn:
-            await conn.execute(text("TRUNCATE TABLE audit_events, templates, enrollment_sessions, users CASCADE;"))
+            await conn.execute(
+                text("TRUNCATE TABLE audit_events, templates, enrollment_sessions, users CASCADE;")
+            )
         await app_engine.dispose()
         await admin_engine.dispose()
 

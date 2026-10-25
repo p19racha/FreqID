@@ -71,8 +71,7 @@ def test_exact_cosine_similarity_preservation(key_provider):
         trans_sim = float(np.dot(u_prime, v_prime))
 
         err = abs(orig_sim - trans_sim)
-        if err > max_cosine_error:
-            max_cosine_error = err
+        max_cosine_error = max(max_cosine_error, err)
 
     # Error must be below float32 numerical precision tolerance (< 1e-4)
     assert max_cosine_error < 1e-4, f"Cosine similarity altered! Max error: {max_cosine_error}"
@@ -190,6 +189,7 @@ def test_envelope_v2_encryption_roundtrip(key_provider):
 
     # 4. Tampering format_version triggers AAD failure
     from cryptography.exceptions import InvalidTag
+
     tampered_rec = EncryptedTemplateRecord(
         encrypted_blob=rec_v2.encrypted_blob,
         wrapped_data_key=rec_v2.wrapped_data_key,
@@ -199,4 +199,3 @@ def test_envelope_v2_encryption_roundtrip(key_provider):
     )
     with pytest.raises(InvalidTag):
         encryptor.decrypt(tampered_rec, user_id="user_v2", model_version="v1.0-ir18")
-

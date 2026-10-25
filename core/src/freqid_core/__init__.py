@@ -64,14 +64,18 @@ __all__ = [
 def __getattr__(name: str) -> Any:
     if name in ("Embedder", "ModelInfo"):
         from freqid_core.embedder import Embedder, ModelInfo
+
         return Embedder if name == "Embedder" else ModelInfo
     elif name == "IR_18_Partial":
         from freqid_core.model import IR_18_Partial
+
         return IR_18_Partial
     elif name in ("image_to_partial_frequency", "batch_images_to_partial_frequency"):
         from freqid_core import transform
+
         return getattr(transform, name)
     elif name in ("export_to_onnx", "verify_onnx_export"):
         from freqid_core import export_onnx
+
         return getattr(export_onnx, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

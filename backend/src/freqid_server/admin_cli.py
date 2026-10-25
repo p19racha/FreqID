@@ -14,11 +14,10 @@ import sys
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import select, update
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from freqid_server.audit.base import AuditEvent
-from freqid_server.auth.passwords import hash_password, validate_password_policy
+from freqid_server.auth.passwords import hash_password
 from freqid_server.config import load_config
 from freqid_server.storage.models import AdminUserOrm, AuditEventOrm
 
@@ -185,7 +184,9 @@ async def list_admins_cmd() -> None:
         print("-" * 75)
         for a in admins:
             locked = a.locked_until.isoformat() if a.locked_until else "None"
-            print(f"{a.username:<20} {a.role:<12} {str(a.is_active):<8} {a.failed_logins:<8} {locked:<25}")
+            print(
+                f"{a.username:<20} {a.role:<12} {a.is_active!s:<8} {a.failed_logins:<8} {locked:<25}"
+            )
 
     await engine.dispose()
 
