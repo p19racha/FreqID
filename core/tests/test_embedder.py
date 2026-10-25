@@ -3,19 +3,15 @@
 test_embedder.py: Unit tests for Embedder inference, backends, and normalization.
 """
 
-import os
-
 import numpy as np
 import pytest
 import torch
 
 from freqid_core.embedder import Embedder
 from freqid_core.errors import ShapeMismatchError
+from freqid_core.export_onnx import export_to_onnx
 from freqid_core.model import IR_18_Partial
 from freqid_core.payload import PartialFacePayload
-
-REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-ONNX_PATH = os.path.join(REPO_ROOT, "research", "outputs", "checkpoints", "partialface_ir_18.onnx")
 
 
 @pytest.fixture(scope="module")
@@ -25,6 +21,14 @@ def torch_ckpt_path(tmp_path_factory: pytest.TempPathFactory) -> str:
     model = IR_18_Partial(input_channel=27, embedding_dim=512)
     torch.save({"backbone": model.state_dict()}, ckpt_path)
     return str(ckpt_path)
+
+
+@pytest.fixture(scope="module")
+def onnx_ckpt_path(tmp_path_factory: pytest.TempPathFactory) -> str:
+    ckpt_dir = tmp_path_factory.mktemp("checkpoints")
+    onnx_path = ckpt_dir / "partialface_ir_18.onnx"
+    model = IR_18_Partial(input_channel=27, embedding_dim=512)
+    return export_to_onnx(model, str(onnx_path), opset_version=14, dynamic_batch=True)
 
 
 def test_embedder_load_torch(torch_ckpt_path: str):
@@ -37,11 +41,8 @@ def test_embedder_load_torch(torch_ckpt_path: str):
     assert len(info.checkpoint_hash) == 64
 
 
-def test_embedder_load_onnx():
-    if not os.path.exists(ONNX_PATH):
-        pytest.skip("ONNX checkpoint not generated yet")
-
-    embedder = Embedder.from_checkpoint(ONNX_PATH, backend="onnx", device="cpu")
+def test_embedder_load_onnx(onnx_ckpt_path: str):
+    embedder = Embedder.from_checkpoint(onnx_ckpt_path, backend="onnx", device="cpu")
     info = embedder.model_info()
 
     assert info.backend == "onnx"
